@@ -216,7 +216,6 @@ fun OnboardingAuthenticationScreen(
 ) {
     var inputEmail by remember { mutableStateOf("") }
     var inputCode by remember { mutableStateOf("") }
-    var showRevealCode by remember { mutableStateOf(false) }
 
     val isAwaitingVerification by viewModel.isAwaitingVerification.collectAsState()
     val verificationEmail by viewModel.verificationEmail.collectAsState()
@@ -387,7 +386,7 @@ fun OnboardingAuthenticationScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    // Simulation banner representing the Gmail dispatch message
+                    // Verification alert card
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(containerColor = Color(0xFFEFF6FF)),
@@ -396,71 +395,17 @@ fun OnboardingAuthenticationScreen(
                     ) {
                         Column(modifier = Modifier.padding(12.dp)) {
                             Text(
-                                text = "📬 Real User Security Gateway",
+                                text = "📬 Security Gateway Verification",
                                 fontWeight = FontWeight.Bold,
                                 style = MaterialTheme.typography.labelMedium,
                                 color = Color(0xFF1E3A8A)
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "A simulated verification email has been dispatched to $verificationEmail to ensure active physical attention. Pull down your Android Status Bar/Notification tray to open the message, or use the sandbox retrieval tool below:",
+                                text = "A verification email was dispatched to $verificationEmail. Check your inbox or pull down your Android Status Bar/Notification tray to find the secure activation code.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color(0xFF1E40AF)
                             )
-                            
-                            Spacer(modifier = Modifier.height(8.dp))
-                            
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                OutlinedButton(
-                                    onClick = { showRevealCode = !showRevealCode },
-                                    modifier = Modifier.testTag("reveal_code_button"),
-                                    colors = ButtonDefaults.outlinedButtonColors(
-                                        contentColor = Color(0xFF1E40AF)
-                                    ),
-                                    shape = RoundedCornerShape(6.dp),
-                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
-                                ) {
-                                    Text(
-                                        text = if (showRevealCode) "🙈 Hide Sandbox Code" else "🔑 Reveal Sandbox Code",
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 11.sp
-                                    )
-                                }
-
-                                if (showRevealCode) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        Text(
-                                            text = generatedCode,
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.ExtraBold,
-                                            color = Color(0xFF1E3A8A),
-                                            modifier = Modifier
-                                                .background(Color.White, RoundedCornerShape(4.dp))
-                                                .border(1.dp, Color(0xFF93C5FD), RoundedCornerShape(4.dp))
-                                                .padding(horizontal = 8.dp, vertical = 2.dp)
-                                        )
-                                        
-                                        IconButton(
-                                            onClick = { inputCode = generatedCode },
-                                            modifier = Modifier.size(28.dp).testTag("autofill_code_button")
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Refresh,
-                                                contentDescription = "Auto-fill",
-                                                tint = Color(0xFF16A34A),
-                                                modifier = Modifier.size(18.dp)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
                         }
                     }
 
