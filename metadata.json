@@ -1,0 +1,6 @@
+{
+  "name": "E-Kainano Translation",
+  "description": "A Kiribati-English language exchange and translation workspace that enhances low-resource Kiribati language using Gemini AI and human edits saved directly to local devices.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

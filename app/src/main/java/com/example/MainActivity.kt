@@ -1,0 +1,1119 @@
+package com.example
+
+import android.os.Bundle
+import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.data.TranslationEntity
+import com.example.ui.TranslationViewModel
+import com.example.ui.theme.MyApplicationTheme
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContent {
+            val viewModel: TranslationViewModel = viewModel()
+            val isDarkTheme by viewModel.isDarkTheme.collectAsState()
+            MyApplicationTheme(darkTheme = isDarkTheme) {
+                MainTranslationApp(viewModel = viewModel)
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MainTranslationApp(
+    viewModel: TranslationViewModel = viewModel()
+) {
+    val context = LocalContext.current
+    val userEmail by viewModel.currentUserEmail.collectAsState()
+    val toastMessage by viewModel.showToastMessage.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+
+    // Handle temporary Toast alerts
+    LaunchedEffect(toastMessage) {
+        toastMessage?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            viewModel.clearToastMessage()
+        }
+    }
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "App Logo",
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(28.dp)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = "E-Kainano Translation",
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.SansSerif,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF1E3A8A) // Matching the beautiful CSS banner blue
+                ),
+                actions = {
+                    val isDarkTheme by viewModel.isDarkTheme.collectAsState()
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(end = 8.dp)
+                    ) {
+                        Text(
+                            text = if (isDarkTheme) "🌙" else "☀️",
+                            fontSize = 20.sp,
+                            modifier = Modifier.padding(end = 4.dp)
+                        )
+                        Switch(
+                            checked = isDarkTheme,
+                            onCheckedChange = { viewModel.toggleTheme() },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color(0xFFFBBF24),
+                                checkedTrackColor = Color(0xFF34D399),
+                                uncheckedThumbColor = Color(0xFFFBBF24),
+                                uncheckedTrackColor = Color(0xFFCBD5E1)
+                            ),
+                            modifier = Modifier.testTag("theme_toggle_switch")
+                        )
+                    }
+                    userEmail?.let { email ->
+                        IconButton(
+                            onClick = { viewModel.signOut() },
+                            modifier = Modifier.testTag("sign_out_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AccountCircle,
+                                contentDescription = "Sign Out ($email)",
+                                tint = Color.White
+                            )
+                        }
+                    }
+                }
+            )
+        }
+    ) { innerPadding ->
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            if (userEmail == null) {
+                // If the user is not authenticated with Gmail, show the onboarding login screen
+                OnboardingAuthenticationScreen(
+                    viewModel = viewModel,
+                    errorMessage = errorMessage
+                )
+            } else {
+                // Main Workspace Layout
+                WorkspaceScreen(
+                    viewModel = viewModel,
+                    userEmail = userEmail!!,
+                    errorMessage = errorMessage
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun OnboardingAuthenticationScreen(
+    viewModel: TranslationViewModel,
+    errorMessage: String?
+) {
+    var inputEmail by remember { mutableStateOf("") }
+    var inputCode by remember { mutableStateOf("") }
+    var showRevealCode by remember { mutableStateOf(false) }
+
+    val isAwaitingVerification by viewModel.isAwaitingVerification.collectAsState()
+    val verificationEmail by viewModel.verificationEmail.collectAsState()
+    val generatedCode by viewModel.generatedCode.collectAsState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        // App Hero Banner Image (Generated visual asset)
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(180.dp),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.img_hero_banner_1782856740510),
+                contentDescription = "E-Kainano Hero Banner",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Text(
+            text = "Digitizing Kiribati (GIL)",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF1E3A8A),
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "Help transition the low-resource Kiribati language into a medium-to-high resource digital language through collaborative translations and verified human edits.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 10.dp)
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        if (!isAwaitingVerification) {
+            // Step 1: Input Gmail address
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Lock,
+                            contentDescription = "Lock Icon",
+                            tint = Color(0xFF1E3A8A)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Gmail Account Verification",
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color(0xFF1E3A8A)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    OutlinedTextField(
+                        value = inputEmail,
+                        onValueChange = { inputEmail = it },
+                        label = { Text("Enter Gmail Address") },
+                        placeholder = { Text("your.email@gmail.com") },
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("gmail_input_field"),
+                        leadingIcon = {
+                            Icon(imageVector = Icons.Default.Email, contentDescription = "Email Icon")
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF1E3A8A),
+                            focusedLabelColor = Color(0xFF1E3A8A)
+                        )
+                    )
+
+                    AnimatedVisibility(visible = errorMessage != null) {
+                        errorMessage?.let {
+                            Text(
+                                text = it,
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier
+                                    .padding(top = 8.dp)
+                                    .fillMaxWidth(),
+                                textAlign = TextAlign.Start
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(18.dp))
+
+                    Button(
+                        onClick = {
+                            viewModel.signInWithEmail(inputEmail)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp)
+                            .testTag("authenticate_button"),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF1E3A8A)
+                        ),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text(
+                            text = "Access E-Kainano Translation",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+        } else {
+            // Step 2: Input Verification Passkey to ensure real human user
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "Check Circle",
+                            tint = Color(0xFF16A34A)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Confirm Validation Code",
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color(0xFF16A34A)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Simulation banner representing the Gmail dispatch message
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFEFF6FF)),
+                        shape = RoundedCornerShape(8.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFBFDBFE))
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text(
+                                text = "📬 Real User Security Gateway",
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Color(0xFF1E3A8A)
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "A simulated verification email has been dispatched to $verificationEmail to ensure active physical attention. Pull down your Android Status Bar/Notification tray to open the message, or use the sandbox retrieval tool below:",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFF1E40AF)
+                            )
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                OutlinedButton(
+                                    onClick = { showRevealCode = !showRevealCode },
+                                    modifier = Modifier.testTag("reveal_code_button"),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        contentColor = Color(0xFF1E40AF)
+                                    ),
+                                    shape = RoundedCornerShape(6.dp),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                                ) {
+                                    Text(
+                                        text = if (showRevealCode) "🙈 Hide Sandbox Code" else "🔑 Reveal Sandbox Code",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 11.sp
+                                    )
+                                }
+
+                                if (showRevealCode) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Text(
+                                            text = generatedCode,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = Color(0xFF1E3A8A),
+                                            modifier = Modifier
+                                                .background(Color.White, RoundedCornerShape(4.dp))
+                                                .border(1.dp, Color(0xFF93C5FD), RoundedCornerShape(4.dp))
+                                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                                        )
+                                        
+                                        IconButton(
+                                            onClick = { inputCode = generatedCode },
+                                            modifier = Modifier.size(28.dp).testTag("autofill_code_button")
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Refresh,
+                                                contentDescription = "Auto-fill",
+                                                tint = Color(0xFF16A34A),
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    OutlinedTextField(
+                        value = inputCode,
+                        onValueChange = { inputCode = it },
+                        label = { Text("Enter 6-Digit Code") },
+                        placeholder = { Text("Enter token") },
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("verification_code_input"),
+                        leadingIcon = {
+                            Icon(imageVector = Icons.Default.Lock, contentDescription = "OTP Lock")
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF16A34A),
+                            focusedLabelColor = Color(0xFF16A34A)
+                        )
+                    )
+
+                    AnimatedVisibility(visible = errorMessage != null) {
+                        errorMessage?.let {
+                            Text(
+                                text = it,
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier
+                                    .padding(top = 8.dp)
+                                    .fillMaxWidth(),
+                                textAlign = TextAlign.Start
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                viewModel.cancelVerification()
+                                inputCode = ""
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(46.dp),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("Back", fontWeight = FontWeight.Bold)
+                        }
+
+                        Button(
+                            onClick = {
+                                viewModel.verifyCode(inputCode)
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(46.dp)
+                                .testTag("verify_otp_button"),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF16A34A)
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("Verify Code", fontWeight = FontWeight.Bold, color = Color.White)
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = "E-Kainano Translation • Version ${BuildConfig.VERSION_NAME} (Build ${BuildConfig.VERSION_CODE})",
+            style = MaterialTheme.typography.labelSmall,
+            color = Color.Gray,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.testTag("app_version_footer_onboarding")
+        )
+    }
+}
+
+@Composable
+fun WorkspaceScreen(
+    viewModel: TranslationViewModel,
+    userEmail: String,
+    errorMessage: String?
+) {
+    val sourceText by viewModel.sourceText.collectAsState()
+    val direction by viewModel.direction.collectAsState()
+    val isTranslating by viewModel.isTranslating.collectAsState()
+    val aiBaseline by viewModel.aiBaseline.collectAsState()
+    val editedTranslation by viewModel.editedTranslation.collectAsState()
+    val structuralBreakdown by viewModel.structuralBreakdown.collectAsState()
+    val culturalNotes by viewModel.culturalNotes.collectAsState()
+    val savedTranslations by viewModel.savedTranslations.collectAsState()
+
+    var particleMode by remember { mutableStateOf(false) }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Active session header block
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFEFF6FF)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFBFDBFE))
+            ) {
+                Row(
+                    modifier = Modifier.padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF3B82F6)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = userEmail.take(1).uppercase(Locale.ROOT),
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column {
+                        Text(
+                            text = "Authenticated Contributor",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFF1E3A8A),
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = userEmail,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+        }
+
+        // Translation section card
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "1. AI Insights Translation Layer",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1E3A8A)
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Direction selection row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedButton(
+                            onClick = { viewModel.setDirection("GIL ➔ EN") },
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = if (direction == "GIL ➔ EN") Color(0xFFDBEAFE) else Color.Transparent
+                            ),
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.5.dp,
+                                if (direction == "GIL ➔ EN") Color(0xFF3B82F6) else Color.LightGray
+                            )
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("Kiribati", fontWeight = FontWeight.Bold)
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(Icons.AutoMirrored.Filled.ArrowForward, "to", modifier = Modifier.size(14.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("English")
+                            }
+                        }
+
+                        OutlinedButton(
+                            onClick = { viewModel.setDirection("EN ➔ GIL") },
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = if (direction == "EN ➔ GIL") Color(0xFFDBEAFE) else Color.Transparent
+                            ),
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.5.dp,
+                                if (direction == "EN ➔ GIL") Color(0xFF3B82F6) else Color.LightGray
+                            )
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("English")
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(Icons.AutoMirrored.Filled.ArrowForward, "to", modifier = Modifier.size(14.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Kiribati", fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Input Text
+                    OutlinedTextField(
+                        value = sourceText,
+                        onValueChange = { viewModel.setSourceText(it) },
+                        label = { Text("Source Phrase") },
+                        placeholder = { Text("E.g., Mauri ko uara? / Hello, how are you?") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp)
+                            .testTag("source_text_input"),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF1E3A8A),
+                            focusedLabelColor = Color(0xFF1E3A8A)
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Particle Mode Toggle Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = "Particle Mode Icon",
+                                tint = Color(0xFFD97706),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Column {
+                                Text(
+                                    text = "Optimize for Particle Mode",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "Isolates grammatical particles closely",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        Switch(
+                            checked = particleMode,
+                            onCheckedChange = { particleMode = it },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color(0xFFD97706),
+                                checkedTrackColor = Color(0xFFFEF3C7)
+                            ),
+                            modifier = Modifier.testTag("particle_mode_switch")
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    AnimatedVisibility(visible = errorMessage != null) {
+                        errorMessage?.let {
+                            Text(
+                                text = it,
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(bottom = 10.dp)
+                            )
+                        }
+                    }
+
+                    // Translate button
+                    Button(
+                        onClick = { viewModel.generateAIInsights(particleMode) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp)
+                            .testTag("translate_btn"),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF2563EB)
+                        ),
+                        enabled = !isTranslating,
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        if (isTranslating) {
+                            Text("Contacting Language Nodes...", color = Color.White)
+                        } else {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Refresh, contentDescription = "Globe Icon", tint = Color.White)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Generate AI Insights", fontWeight = FontWeight.Bold, color = Color.White)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Edit and Attribution section
+        if (aiBaseline.isNotEmpty()) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "2. Edit & Attribute to Device Ledger",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF16A34A)
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        // Original Baseline Card (Read-only)
+                        OutlinedCard(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFF9FAFB))
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text(
+                                    text = "Original AI Baseline",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = aiBaseline,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        // Verified translation (Editable field)
+                        OutlinedTextField(
+                            value = editedTranslation,
+                            onValueChange = { viewModel.setEditedTranslation(it) },
+                            label = { Text("Verified Translation (Edit Here)") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("edited_translation_input"),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFF16A34A),
+                                focusedLabelColor = Color(0xFF16A34A)
+                            )
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        // Structural Breakdown
+                        OutlinedTextField(
+                            value = structuralBreakdown,
+                            onValueChange = { viewModel.setStructuralBreakdown(it) },
+                            label = { Text("Structural Breakdown") },
+                            placeholder = { Text("E.g., Breakdown of core particles (e, n, ia, etc.)") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(90.dp)
+                                .testTag("breakdown_input"),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFF16A34A),
+                                focusedLabelColor = Color(0xFF16A34A)
+                            )
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        // Cultural notes
+                        OutlinedTextField(
+                            value = culturalNotes,
+                            onValueChange = { viewModel.setCulturalNotes(it) },
+                            label = { Text("Cultural Context Notes") },
+                            placeholder = { Text("Identify cultural nuances, formal/informal styles") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(90.dp)
+                                .testTag("cultural_notes_input"),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFF16A34A),
+                                focusedLabelColor = Color(0xFF16A34A)
+                            )
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Save Button
+                        Button(
+                            onClick = { viewModel.commitToLocalLedger() },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp)
+                                .testTag("commit_btn"),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF16A34A)
+                            ),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.CheckCircle, contentDescription = "Check Icon", tint = Color.White)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Commit to Local Ledger", fontWeight = FontWeight.Bold, color = Color.White)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Saved Ledger Copies block title
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Your Attributed Local Ledger",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1E293B)
+                )
+
+                if (savedTranslations.isNotEmpty()) {
+                    IconButton(
+                        onClick = { viewModel.clearLedger() },
+                        modifier = Modifier.testTag("clear_all_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Clear database",
+                            tint = Color.Gray
+                        )
+                    }
+                }
+            }
+        }
+
+        if (savedTranslations.isEmpty()) {
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 10.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "Empty Book icon",
+                            tint = Color.Gray,
+                            modifier = Modifier.size(40.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Device copy ledger is empty.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.Gray
+                        )
+                        Text(
+                            text = "Translate & approve translations above to populate your offline copy library.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                }
+            }
+        } else {
+            items(savedTranslations, key = { it.id }) { translation ->
+                TranslationLedgerItem(
+                    item = translation,
+                    onDelete = { viewModel.deleteLedgerItem(translation.id) }
+                )
+            }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(24.dp))
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "E-Kainano Translation • Version ${BuildConfig.VERSION_NAME} (Build ${BuildConfig.VERSION_CODE})",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.testTag("app_version_footer_workspace")
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun TranslationLedgerItem(
+    item: TranslationEntity,
+    onDelete: () -> Unit
+) {
+    val dateString = remember(item.timestamp) {
+        val sdf = SimpleDateFormat("MMM d, yyyy HH:mm", Locale.getDefault())
+        sdf.format(Date(item.timestamp))
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("ledger_item_card_${item.id}"),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .background(Color(0xFFF1F5F9), RoundedCornerShape(4.dp))
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = item.direction,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF334155)
+                    )
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = dateString,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    IconButton(
+                        onClick = onDelete,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .testTag("delete_item_button_${item.id}")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete item",
+                            tint = Color(0xFFEF4444),
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Text(
+                text = "Source phrase:",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.Gray,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = item.sourceText,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Verified Correction:",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color(0xFF16A34A),
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = item.editedTranslation,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF15803D)
+            )
+
+            if (item.structuralBreakdown.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Divider(color = Color(0xFFF1F5F9))
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Particles & Structure:",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = item.structuralBreakdown,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            if (item.culturalNotes.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(6.dp))
+                if (item.structuralBreakdown.isEmpty()) {
+                    Divider(color = Color(0xFFF1F5F9))
+                    Spacer(modifier = Modifier.height(6.dp))
+                }
+                Text(
+                    text = "Cultural Nuances:",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = item.culturalNotes,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            Divider(color = Color(0xFFF1F5F9))
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Attributed to: ${item.contributorEmail}",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.Gray,
+                fontFamily = FontFamily.Monospace
+            )
+        }
+    }
+}
