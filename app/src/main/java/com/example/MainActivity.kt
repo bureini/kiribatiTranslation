@@ -45,6 +45,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -216,6 +217,33 @@ fun OnboardingAuthenticationScreen(
 ) {
     var inputEmail by remember { mutableStateOf("") }
     var inputCode by remember { mutableStateOf("") }
+    var showRevealCode by remember { mutableStateOf(false) }
+
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var hasNotificationPermission by remember {
+        mutableStateOf(
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                androidx.core.content.ContextCompat.checkSelfPermission(
+                    context,
+                    android.Manifest.permission.POST_NOTIFICATIONS
+                ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+            } else {
+                true
+            }
+        )
+    }
+
+    val permissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        hasNotificationPermission = isGranted
+    }
+
+    LaunchedEffect(Unit) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU && !hasNotificationPermission) {
+            permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
 
     val isAwaitingVerification by viewModel.isAwaitingVerification.collectAsState()
     val verificationEmail by viewModel.verificationEmail.collectAsState()
@@ -406,6 +434,60 @@ fun OnboardingAuthenticationScreen(
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color(0xFF1E40AF)
                             )
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                OutlinedButton(
+                                    onClick = { showRevealCode = !showRevealCode },
+                                    modifier = Modifier.testTag("reveal_code_button"),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        contentColor = Color(0xFF1E40AF)
+                                    ),
+                                    shape = RoundedCornerShape(6.dp),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                                ) {
+                                    Text(
+                                        text = if (showRevealCode) "🙈 Hide Sandbox Code" else "🔑 Reveal Sandbox Code",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 11.sp
+                                    )
+                                }
+
+                                if (showRevealCode) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Text(
+                                            text = generatedCode,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = Color(0xFF1E3A8A),
+                                            modifier = Modifier
+                                                .background(Color.White, RoundedCornerShape(4.dp))
+                                                .border(1.dp, Color(0xFF93C5FD), RoundedCornerShape(4.dp))
+                                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                                        )
+
+                                        IconButton(
+                                            onClick = { inputCode = generatedCode },
+                                            modifier = Modifier.size(28.dp).testTag("autofill_code_button")
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Refresh,
+                                                contentDescription = "Auto-fill",
+                                                tint = Color(0xFF16A34A),
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
 
@@ -554,6 +636,134 @@ fun WorkspaceScreen(
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
+                    }
+                }
+            }
+        }
+
+        // Connectivity & Sync Status Indicator block
+        item {
+            val isOnline by viewModel.isOnline.collectAsState()
+            val pendingSyncCount by viewModel.pendingSyncCount.collectAsState()
+            val isSyncing by viewModel.isSyncing.collectAsState()
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("connectivity_sync_card"),
+                colors = CardDefaults.cardColors(
+                    containerColor = when {
+                        isSyncing -> Color(0xFFF0FDF4)
+                        !isOnline -> Color(0xFFFEF2F2)
+                        pendingSyncCount > 0 -> Color(0xFFFFFBEB)
+                        else -> Color(0xFFF0FDF4)
+                    }
+                ),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    when {
+                        isSyncing -> Color(0xFF86EFAC)
+                        !isOnline -> Color(0xFFFECACA)
+                        pendingSyncCount > 0 -> Color(0xFFFDE68A)
+                        else -> Color(0xFFBBF7D0)
+                    }
+                )
+            ) {
+                Row(
+                    modifier = Modifier.padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        // Status Icon
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    when {
+                                        !isOnline -> Color(0xFFEF4444)
+                                        else -> Color(0xFF22C55E)
+                                    }
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = if (isOnline) Icons.Default.CheckCircle else Icons.Default.Info,
+                                contentDescription = if (isOnline) "Online" else "Offline",
+                                tint = Color.White,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        Column {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = if (isOnline) "System Online" else "Offline Mode",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isOnline) Color(0xFF15803D) else Color(0xFFB91C1C)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .size(8.dp)
+                                        .clip(CircleShape)
+                                        .background(if (isOnline) Color(0xFF22C55E) else Color(0xFFEF4444))
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = when {
+                                    isSyncing -> "Synchronizing offline database to cloud..."
+                                    pendingSyncCount > 0 -> "$pendingSyncCount local save(s) pending synchronization"
+                                    else -> "All local saves successfully synchronized"
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.DarkGray
+                            )
+                        }
+                    }
+
+                    if (pendingSyncCount > 0) {
+                        Button(
+                            onClick = { viewModel.syncPendingTranslations() },
+                            enabled = isOnline && !isSyncing,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF1E3A8A),
+                                contentColor = Color.White,
+                                disabledContainerColor = Color(0xFFE2E8F0),
+                                disabledContentColor = Color.Gray
+                            ),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.testTag("sync_now_button")
+                        ) {
+                            if (isSyncing) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(14.dp),
+                                    color = Color.Gray,
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = "Sync",
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "Sync Now",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -949,17 +1159,38 @@ fun TranslationLedgerItem(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
-                    modifier = Modifier
-                        .background(Color(0xFFF1F5F9), RoundedCornerShape(4.dp))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = item.direction,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF334155)
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .background(Color(0xFFF1F5F9), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = item.direction,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF334155)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                if (item.isSynced) Color(0xFFDCFCE7) else Color(0xFFFEF3C7),
+                                RoundedCornerShape(4.dp)
+                            )
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = if (item.isSynced) "Synced" else "Pending Sync",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (item.isSynced) Color(0xFF166534) else Color(0xFF92400E),
+                            modifier = Modifier.testTag("sync_status_badge_${item.id}")
+                        )
+                    }
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {

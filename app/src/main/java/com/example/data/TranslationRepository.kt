@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.Flow
 
 class TranslationRepository(private val translationDao: TranslationDao) {
     val allTranslations: Flow<List<TranslationEntity>> = translationDao.getAllTranslations()
+    val unsyncedCount: Flow<Int> = translationDao.getUnsyncedCount()
 
     suspend fun insert(translation: TranslationEntity) {
         translationDao.insertTranslation(translation)
@@ -19,5 +20,9 @@ class TranslationRepository(private val translationDao: TranslationDao) {
 
     suspend fun clear() {
         translationDao.clearAll()
+    }
+
+    suspend fun markAllAsSynced() {
+        translationDao.markAllAsSynced()
     }
 }

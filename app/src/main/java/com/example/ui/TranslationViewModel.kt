@@ -4,6 +4,10 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -32,10 +36,55 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
 
     private val repository: TranslationRepository
     private val sharedPrefs = application.getSharedPreferences("ekainano_prefs", Context.MODE_PRIVATE)
+    private val connectivityManager = application.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+
+    private val _isOnline = MutableStateFlow(checkInitialConnectivity())
+    val isOnline: StateFlow<Boolean> = _isOnline.asStateFlow()
+
+    private val _isSyncing = MutableStateFlow(false)
+    val isSyncing: StateFlow<Boolean> = _isSyncing.asStateFlow()
+
+    private val networkCallback = object : ConnectivityManager.NetworkCallback() {
+        override fun onAvailable(network: Network) {
+            _isOnline.value = true
+        }
+
+        override fun onLost(network: Network) {
+            _isOnline.value = false
+        }
+    }
+
+    private fun checkInitialConnectivity(): Boolean {
+        return try {
+            val activeNetwork = connectivityManager.activeNetwork ?: return false
+            val capabilities = connectivityManager.getNetworkCapabilities(activeNetwork) ?: return false
+            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+        } catch (e: Exception) {
+            false
+        }
+    }
 
     init {
         val database = AppDatabase.getDatabase(application)
         repository = TranslationRepository(database.translationDao())
+
+        try {
+            val request = NetworkRequest.Builder()
+                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                .build()
+            connectivityManager.registerNetworkCallback(request, networkCallback)
+        } catch (e: Exception) {
+            Log.e("TranslationViewModel", "Failed to register network callback", e)
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        try {
+            connectivityManager.unregisterNetworkCallback(networkCallback)
+        } catch (e: Exception) {
+            Log.e("TranslationViewModel", "Failed to unregister network callback", e)
+        }
     }
 
     // Expose all saved translations from database Flow
@@ -44,6 +93,13 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
+        )
+
+    val pendingSyncCount: StateFlow<Int> = repository.unsyncedCount
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = 0
         )
 
     // UI States
@@ -375,6 +431,31 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
             repository.clear()
             withContext(Dispatchers.Main) {
                 _showToastMessage.value = "Local device database cleared."
+            }
+        }
+    }
+
+    fun syncPendingTranslations() {
+        if (!_isOnline.value) {
+            _errorMessage.value = "Cannot synchronize: No network connection."
+            return
+        }
+        if (pendingSyncCount.value == 0) {
+            _showToastMessage.value = "All translations are already synchronized!"
+            return
+        }
+
+        _isSyncing.value = true
+        viewModelScope.launch {
+            try {
+                // Simulate network upload delay for realism
+                kotlinx.coroutines.delay(1200)
+                repository.markAllAsSynced()
+                _showToastMessage.value = "Successfully synchronized offline entries to E-Kainano cloud ledger!"
+            } catch (e: Exception) {
+                _errorMessage.value = "Synchronization failed: ${e.message}"
+            } finally {
+                _isSyncing.value = false
             }
         }
     }

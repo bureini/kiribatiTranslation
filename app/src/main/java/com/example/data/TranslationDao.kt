@@ -22,4 +22,10 @@ interface TranslationDao {
 
     @Query("DELETE FROM translations")
     suspend fun clearAll()
+
+    @Query("SELECT COUNT(*) FROM translations WHERE isSynced = 0")
+    fun getUnsyncedCount(): Flow<Int>
+
+    @Query("UPDATE translations SET isSynced = 1 WHERE isSynced = 0")
+    suspend fun markAllAsSynced()
 }
