@@ -142,6 +142,22 @@ fun MainTranslationApp(
                             fontFamily = FontFamily.SansSerif,
                             color = MaterialTheme.colorScheme.onPrimary
                         )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    color = Color.White.copy(alpha = 0.2f),
+                                    shape = RoundedCornerShape(4.dp)
+                                )
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "v${BuildConfig.VERSION_NAME}",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.White
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -992,8 +1008,9 @@ fun WorkspaceScreen(
                             placeholder = { Text("E.g., Breakdown of core particles (e, n, ia, etc.)") },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(90.dp)
+                                .height(200.dp)
                                 .testTag("breakdown_input"),
+                            maxLines = 15,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = Color(0xFF16A34A),
                                 focusedLabelColor = Color(0xFF16A34A)
@@ -1010,8 +1027,9 @@ fun WorkspaceScreen(
                             placeholder = { Text("Identify cultural nuances, formal/informal styles") },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(90.dp)
+                                .height(200.dp)
                                 .testTag("cultural_notes_input"),
+                            maxLines = 15,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = Color(0xFF16A34A),
                                 focusedLabelColor = Color(0xFF16A34A)
