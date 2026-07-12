@@ -1,1 +1,56 @@
+name: Build Web App and Android APK
 
+on:
+  push:
+    branches: [ "WebApkBuild-branch" ]
+  pull_request:
+    branches: [ "WebApkBuild-branch" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout the code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+
+    # This fixes the validation error by replacing the corrupt jar with a clean official one
+    - name: Download Clean Gradle Wrapper JAR
+      run: |
+        mkdir -p gradle/wrapper
+        curl -L https://raw.githubusercontent.com/gradle/gradle/main/gradle/wrapper/gradle-wrapper.jar -o gradle/wrapper/gradle-wrapper.jar
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    # 1. Build the Android APK
+    - name: Build Android APK
+      run: ./gradlew :app:assembleRelease
+
+    # 2. Build the Web App (Compose Multiplatform Wasm)
+    - name: Build Web App
+      run: ./gradlew :app:wasmJsBrowserDistribution
+
+    # 3. Upload the generated APK as an artifact
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-release-apk
+        path: app/build/outputs/apk/release/*.apk
+
+    # 4. Upload the Web Build files as an artifact
+    - name: Upload Web Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: web-app-distribution
+        path: app/build/dist/wasmJs/productionExecutable/
