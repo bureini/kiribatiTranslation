@@ -34,13 +34,11 @@ jobs:
       run: |
         echo "GEMINI_API_KEY=YOUR_DUMMY_KEY" > .env
 
-    # Step 5: FIX - Build the Debug APK while bypassing the missing keystore error
-    - name: Build with Gradle
-      run: gradle assembleDebug -Pandroid.injected.signing.config.file=""
+    # Step 5: FIX - Generate a temporary dummy debug keystore file to satisfy debugConfig
+    - name: Generate Dummy Keystore
+      run: |
+        keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
 
-    # Step 6: Upload the generated APK as a downloadable artifact
-    - name: Upload APK Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: kiribati-translation-debug-apk
-        path: app/build/outputs/apk/debug/app-debug.apk
+    # Step 6: Build the Debug APK using the fresh Gradle setup
+    - name: Build with Gradle
+      run: gradle assembleDebug
