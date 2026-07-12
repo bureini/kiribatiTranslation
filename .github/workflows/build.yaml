@@ -15,7 +15,7 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v4
 
-    # Step 2: Set up Java JDK 17 (Required for modern Gradle/Kotlin builds)
+    # Step 2: Set up Java JDK 17
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
@@ -23,22 +23,25 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
-    # Step 3: Grant execute permission for the Gradle wrapper script
+    # Step 3: FIX - Re-download a clean gradle-wrapper.jar to replace the corrupt file
+    - name: Fix Corrupt Gradle Wrapper Jar
+      run: |
+        curl -Lo gradle/wrapper/gradle-wrapper.jar https://github.com/gradle/gradle/raw/v8.7.0/gradle/wrapper/gradle-wrapper.jar
+
+    # Step 4: Grant execute permission for the Gradle wrapper script
     - name: Grant Execute Permission for Gradlew
       run: chmod +x gradlew
 
-    # Step 4: Create a dummy .env file if required by your build template
-    # Note: If your app requires a real API key to compile, swap 'YOUR_DUMMY_KEY' 
-    # with a GitHub Secret variable like ${{ secrets.GEMINI_API_KEY }}
+    # Step 5: Create the .env file
     - name: Create .env File
       run: |
         echo "GEMINI_API_KEY=YOUR_DUMMY_KEY" > .env
 
-    # Step 5: Build the Debug APK using Gradle
+    # Step 6: Build the Debug APK using Gradle
     - name: Build with Gradle
       run: ./gradlew assembleDebug
 
-    # Step 6: Upload the generated APK as a downloadable artifact
+    # Step 7: Upload the generated APK as a downloadable artifact
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
