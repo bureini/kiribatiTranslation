@@ -115,7 +115,6 @@ fun MainTranslationApp(
     val toastMessage by viewModel.showToastMessage.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
 
-    // Handle temporary Toast alerts
     LaunchedEffect(toastMessage) {
         toastMessage?.let {
             Toast.makeText(context, it, Toast.LENGTH_LONG).show()
@@ -161,7 +160,7 @@ fun MainTranslationApp(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF1E3A8A) // Matching the beautiful CSS banner blue
+                    containerColor = Color(0xFF1E3A8A)
                 ),
                 actions = {
                     val isDarkTheme by viewModel.isDarkTheme.collectAsState()
@@ -209,13 +208,11 @@ fun MainTranslationApp(
             color = MaterialTheme.colorScheme.background
         ) {
             if (userEmail == null) {
-                // If the user is not authenticated with Gmail, show the onboarding login screen
                 OnboardingAuthenticationScreen(
                     viewModel = viewModel,
                     errorMessage = errorMessage
                 )
             } else {
-                // Main Workspace Layout
                 WorkspaceScreen(
                     viewModel = viewModel,
                     userEmail = userEmail!!,
@@ -233,7 +230,6 @@ fun OnboardingAuthenticationScreen(
 ) {
     var inputEmail by remember { mutableStateOf("") }
     var inputCode by remember { mutableStateOf("") }
-    var showRevealCode by remember { mutableStateOf(false) }
 
     val context = androidx.compose.ui.platform.LocalContext.current
     var hasNotificationPermission by remember {
@@ -263,7 +259,6 @@ fun OnboardingAuthenticationScreen(
 
     val isAwaitingVerification by viewModel.isAwaitingVerification.collectAsState()
     val verificationEmail by viewModel.verificationEmail.collectAsState()
-    val generatedCode by viewModel.generatedCode.collectAsState()
 
     Column(
         modifier = Modifier
@@ -272,7 +267,6 @@ fun OnboardingAuthenticationScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // App Hero Banner Image (Generated visual asset)
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -311,7 +305,6 @@ fun OnboardingAuthenticationScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         if (!isAwaitingVerification) {
-            // Step 1: Input Gmail address
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -399,7 +392,6 @@ fun OnboardingAuthenticationScreen(
                 }
             }
         } else {
-            // Step 2: Input Verification Passkey to ensure real human user
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -430,7 +422,6 @@ fun OnboardingAuthenticationScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    // Verification alert card
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(containerColor = Color(0xFFEFF6FF)),
@@ -450,60 +441,6 @@ fun OnboardingAuthenticationScreen(
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color(0xFF1E40AF)
                             )
-
-                            Spacer(modifier = Modifier.height(10.dp))
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                OutlinedButton(
-                                    onClick = { showRevealCode = !showRevealCode },
-                                    modifier = Modifier.testTag("reveal_code_button"),
-                                    colors = ButtonDefaults.outlinedButtonColors(
-                                        contentColor = Color(0xFF1E40AF)
-                                    ),
-                                    shape = RoundedCornerShape(6.dp),
-                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
-                                ) {
-                                    Text(
-                                        text = if (showRevealCode) "🙈 Hide Sandbox Code" else "🔑 Reveal Sandbox Code",
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 11.sp
-                                    )
-                                }
-
-                                if (showRevealCode) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        Text(
-                                            text = generatedCode,
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.ExtraBold,
-                                            color = Color(0xFF1E3A8A),
-                                            modifier = Modifier
-                                                .background(Color.White, RoundedCornerShape(4.dp))
-                                                .border(1.dp, Color(0xFF93C5FD), RoundedCornerShape(4.dp))
-                                                .padding(horizontal = 8.dp, vertical = 2.dp)
-                                        )
-
-                                        IconButton(
-                                            onClick = { inputCode = generatedCode },
-                                            modifier = Modifier.size(28.dp).testTag("autofill_code_button")
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Refresh,
-                                                contentDescription = "Auto-fill",
-                                                tint = Color(0xFF16A34A),
-                                                modifier = Modifier.size(18.dp)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
                         }
                     }
 
@@ -511,7 +448,9 @@ fun OnboardingAuthenticationScreen(
 
                     OutlinedTextField(
                         value = inputCode,
-                        onValueChange = { inputCode = it },
+                        onValueChange = { input ->
+                            if (input.length <= 6) inputCode = input
+                        },
                         label = { Text("Enter 6-Digit Code") },
                         placeholder = { Text("Enter token") },
                         singleLine = true,
@@ -543,38 +482,41 @@ fun OnboardingAuthenticationScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    Button(
+                        onClick = {
+                            viewModel.verifyCode(inputCode)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp)
+                            .testTag("verify_otp_button"),
+                        enabled = inputCode.length == 6,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF1E3A8A)
+                        ),
+                        shape = RoundedCornerShape(10.dp)
                     ) {
-                        OutlinedButton(
-                            onClick = {
-                                viewModel.cancelVerification()
-                                inputCode = ""
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(46.dp),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text("Back", fontWeight = FontWeight.Bold)
-                        }
+                        Text(
+                            text = "Access E-Kainano Translation",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            color = Color.White
+                        )
+                    }
 
-                        Button(
-                            onClick = {
-                                viewModel.verifyCode(inputCode)
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(46.dp)
-                                .testTag("verify_otp_button"),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF16A34A)
-                            ),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text("Verify Code", fontWeight = FontWeight.Bold, color = Color.White)
-                        }
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    OutlinedButton(
+                        onClick = {
+                            viewModel.cancelVerification()
+                            inputCode = ""
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Back", fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -614,7 +556,6 @@ fun WorkspaceScreen(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Active session header block
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -657,7 +598,6 @@ fun WorkspaceScreen(
             }
         }
 
-        // Connectivity & Sync Status Indicator block
         item {
             val isOnline by viewModel.isOnline.collectAsState()
             val pendingSyncCount by viewModel.pendingSyncCount.collectAsState()
@@ -694,7 +634,6 @@ fun WorkspaceScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.weight(1f)
                     ) {
-                        // Status Icon
                         Box(
                             modifier = Modifier
                                 .size(32.dp)
@@ -785,7 +724,6 @@ fun WorkspaceScreen(
             }
         }
 
-        // Translation section card
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -801,7 +739,6 @@ fun WorkspaceScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // Direction selection row
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly,
@@ -848,7 +785,6 @@ fun WorkspaceScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Input Text
                     OutlinedTextField(
                         value = sourceText,
                         onValueChange = { viewModel.setSourceText(it) },
@@ -866,7 +802,6 @@ fun WorkspaceScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    // Particle Mode Toggle Row
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
@@ -917,7 +852,6 @@ fun WorkspaceScreen(
                         }
                     }
 
-                    // Translate button
                     Button(
                         onClick = { viewModel.generateAIInsights(particleMode) },
                         modifier = Modifier
@@ -944,7 +878,6 @@ fun WorkspaceScreen(
             }
         }
 
-        // Edit and Attribution section
         if (aiBaseline.isNotEmpty()) {
             item {
                 Card(
@@ -961,7 +894,6 @@ fun WorkspaceScreen(
 
                         Spacer(modifier = Modifier.height(14.dp))
 
-                        // Original Baseline Card (Read-only)
                         OutlinedCard(
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(containerColor = Color(0xFFF9FAFB))
@@ -984,7 +916,6 @@ fun WorkspaceScreen(
 
                         Spacer(modifier = Modifier.height(14.dp))
 
-                        // Verified translation (Editable field)
                         OutlinedTextField(
                             value = editedTranslation,
                             onValueChange = { viewModel.setEditedTranslation(it) },
@@ -1000,7 +931,6 @@ fun WorkspaceScreen(
 
                         Spacer(modifier = Modifier.height(14.dp))
 
-                        // Structural Breakdown
                         OutlinedTextField(
                             value = structuralBreakdown,
                             onValueChange = { viewModel.setStructuralBreakdown(it) },
@@ -1019,7 +949,6 @@ fun WorkspaceScreen(
 
                         Spacer(modifier = Modifier.height(14.dp))
 
-                        // Cultural notes
                         OutlinedTextField(
                             value = culturalNotes,
                             onValueChange = { viewModel.setCulturalNotes(it) },
@@ -1038,7 +967,6 @@ fun WorkspaceScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Save Button
                         Button(
                             onClick = { viewModel.commitToLocalLedger() },
                             modifier = Modifier
@@ -1061,7 +989,6 @@ fun WorkspaceScreen(
             }
         }
 
-        // Saved Ledger Copies block title
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
