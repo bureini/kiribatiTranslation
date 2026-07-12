@@ -22,7 +22,7 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    # Step 3: Setup clean Gradle instance matching the required 9.3.1 version
+    # Step 3: Setup clean Gradle instance
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
       with:
@@ -34,9 +34,9 @@ jobs:
       run: |
         echo "GEMINI_API_KEY=YOUR_DUMMY_KEY" > .env
 
-    # Step 5: Build the Debug APK using the fresh Gradle setup
+    # Step 5: FIX - Build the Debug APK while bypassing the missing keystore error
     - name: Build with Gradle
-      run: gradle assembleDebug
+      run: gradle assembleDebug -Pandroid.injected.signing.config.file=""
 
     # Step 6: Upload the generated APK as a downloadable artifact
     - name: Upload APK Artifact
