@@ -22,12 +22,12 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    # Step 3: Setup clean Gradle instance and skip checking the corrupt repo jar
+    # Step 3: Setup clean Gradle instance and turn off wrapper verification explicitly
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
       with:
         gradle-version: 8.7
-        disable-wrapper-validation: true
+        validate-wrappers: false
 
     # Step 4: Create the .env file
     - name: Create .env File
