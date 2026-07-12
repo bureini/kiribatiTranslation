@@ -2,10 +2,10 @@ name: Build Web App and Android APK
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "webapkbuild-branch" ]
   pull_request:
-    branches: [ "main" ]
-  workflow_dispatch: # Allows manual triggering from the Actions tab
+    branches: [ "webapkbuild-branch" ]
+  workflow_dispatch: # Allows you to trigger the build manually from the GitHub UI
 
 jobs:
   build:
@@ -20,18 +20,21 @@ jobs:
       with:
         distribution: 'zulu'
         java-version: '17'
-        cache: 'gradle'
+
+    # This step bypasses/fixes the corrupt wrapper jar by setting up a clean Gradle environment
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
 
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
     # 1. Build the Android APK
     - name: Build Android APK
-      run: ./gradlew :app:assembleRelease # Adjust ':app' if your Android module has a different name
+      run: ./gradlew :app:assembleRelease
 
-    # 2. Build the Web App (Compose Multiplatform Wasm/JS)
+    # 2. Build the Web App (Compose Multiplatform Wasm)
     - name: Build Web App
-      run: ./gradlew :app:wasmJsBrowserDistribution # or :app:jsBrowserDistribution depending on your configuration
+      run: ./gradlew :app:wasmJsBrowserDistribution
 
     # 3. Upload the generated APK as an artifact
     - name: Upload APK Artifact
@@ -45,4 +48,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: web-app-distribution
-        path: app/build/dist/wasmJs/productionExecutable/ # Adjust path if using regular JS instead of Wasm
+        path: app/build/dist/wasmJs/productionExecutable/
