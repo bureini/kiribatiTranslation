@@ -46,9 +46,8 @@ jobs:
         keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
 
     # Step 6: Compile the APK bypassing configuration caches to ensure clean version parsing
-    - name: Build with Gradle
-      run: gradle assembleDebug --no-configuration-cache --refresh-dependencies
-
+    run: gradle clean assembleDebug --no-configuration-cache --refresh-dependencies
+    
     # Step 7: Upload the finished binary package as an internal pipeline artifact
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
