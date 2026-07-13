@@ -1,4 +1,3 @@
-
 package com.ekainano.translation
 
 import android.os.Bundle
