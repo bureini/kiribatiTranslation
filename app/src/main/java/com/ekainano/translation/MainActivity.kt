@@ -1,5 +1,6 @@
 package com.ekainano.translation
 
+import android.app.Application
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -74,6 +75,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ekainano.translation.data.TranslationEntity
 import com.ekainano.translation.ui.TranslationViewModel
@@ -87,8 +89,14 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            val viewModel: TranslationViewModel = viewModel()
+            // Context provider wrapper factory to prevent launch instance crash
+            val context = LocalContext.current
+            val application = context.applicationContext as Application
+            val factory = ViewModelProvider.AndroidViewModelFactory.getInstance(application)
+            
+            val viewModel: TranslationViewModel = viewModel(factory = factory)
             val isDarkTheme by viewModel.isDarkTheme.collectAsState()
+            
             MyApplicationTheme(darkTheme = isDarkTheme) {
                 MainTranslationApp(viewModel = viewModel)
             }
@@ -98,9 +106,7 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainTranslationApp(
-    viewModel: TranslationViewModel = viewModel()
-) {
+fun MainTranslationApp(viewModel: TranslationViewModel) {
     val context = LocalContext.current
     val userEmail by viewModel.currentUserEmail.collectAsState()
     val toastMessage by viewModel.showToastMessage.collectAsState()
