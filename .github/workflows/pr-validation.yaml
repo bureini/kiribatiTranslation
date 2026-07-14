@@ -10,7 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  validate-and-test:
+  # Renamed to match your required branch protection rule name exactly
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -37,7 +38,7 @@ jobs:
       run: |
         keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
 
-    # Compile the debug application binaries bypassing local configuration checks
+    # Deep clean compilation to ensure the new namespace builds safely
     - name: Verify APK Compilation
       run: gradle clean assembleDebug --no-configuration-cache --refresh-dependencies
 
