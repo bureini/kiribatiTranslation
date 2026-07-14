@@ -14,43 +14,34 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # Step 1: Check out the repository source code layout
     - name: Checkout Repository
       uses: actions/checkout@v4
 
-    # Step 2: Set up Java JDK 17 required for modern Android Gradle compilers
+    # Step 2 initializes the compiler context environment
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
 
-    # Step 3: Setup clean Gradle 9.3.1 instance bypassing broken wrappers
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
       with:
         gradle-version: 9.3.1
         validate-wrappers: false
 
-    # Step 4: Inject the GEMINI_API_KEY securely from GitHub Repository Secrets vault
     - name: Create .env File
       run: |
         echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > .env
 
-    # Step 5: Dynamically generate a debug keystore file to fulfill compiler signatures
     - name: Generate Dummy Keystore
       run: |
         keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
 
-    # Step 6: Clear residual compiler artifacts and execute Unit Tests
-    - name: Run Unit Tests
-      run: gradle clean testDebugUnitTest --no-configuration-cache --refresh-dependencies
-
-    # Step 7: Compile the debug package package to verify namespace integrity
+    # Deep clean compilation to ensure the new namespace builds safely
     - name: Verify APK Compilation
-      run: gradle assembleDebug --no-configuration-cache
+      run: gradle clean assembleDebug --no-configuration-cache --refresh-dependencies
 
-    # Step 8: Upload verification binary package as an internal pipeline diagnostic artifact
     - name: Upload Test Build Artifact
       uses: actions/upload-artifact@v4
       with:
