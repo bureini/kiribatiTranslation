@@ -58,9 +58,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -98,7 +98,9 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainTranslationApp(viewModel: TranslationViewModel = viewModel()) {
+fun MainTranslationApp(
+    viewModel: TranslationViewModel = viewModel()
+) {
     val context = LocalContext.current
     val userEmail by viewModel.currentUserEmail.collectAsState()
     val toastMessage by viewModel.showToastMessage.collectAsState()
@@ -219,6 +221,7 @@ fun OnboardingAuthenticationScreen(
 ) {
     var inputEmail by remember { mutableStateOf("") }
     var inputCode by remember { mutableStateOf("") }
+
     val context = LocalContext.current
     var hasNotificationPermission by remember {
         mutableStateOf(
@@ -358,12 +361,16 @@ fun OnboardingAuthenticationScreen(
                     Spacer(modifier = Modifier.height(18.dp))
 
                     Button(
-                        onClick = { viewModel.signInWithEmail(inputEmail) },
+                        onClick = {
+                            viewModel.signInWithEmail(inputEmail)
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp)
                             .testTag("authenticate_button"),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E3A8A)),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF1E3A8A)
+                        ),
                         shape = RoundedCornerShape(10.dp)
                     ) {
                         Text(
@@ -432,7 +439,9 @@ fun OnboardingAuthenticationScreen(
 
                     OutlinedTextField(
                         value = inputCode,
-                        onValueChange = { input -> if (input.length <= 6) inputCode = input },
+                        onValueChange = { input ->
+                            if (input.length <= 6) inputCode = input
+                        },
                         label = { Text("Enter 6-Digit Code") },
                         placeholder = { Text("Enter token") },
                         singleLine = true,
@@ -465,13 +474,17 @@ fun OnboardingAuthenticationScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Button(
-                        onClick = { viewModel.verifyCode(inputCode) },
+                        onClick = {
+                            viewModel.verifyCode(inputCode)
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp)
                             .testTag("verify_otp_button"),
                         enabled = inputCode.length == 6,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E3A8A)),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF1E3A8A)
+                        ),
                         shape = RoundedCornerShape(10.dp)
                     ) {
                         Text(
@@ -616,7 +629,12 @@ fun WorkspaceScreen(
                             modifier = Modifier
                                 .size(32.dp)
                                 .clip(CircleShape)
-                                .background(if (!isOnline) Color(0xFFEF4444) else Color(0xFF22C55E)),
+                                .background(
+                                    when {
+                                        !isOnline -> Color(0xFFEF4444)
+                                        else -> Color(0xFF22C55E)
+                                    }
+                                ),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
@@ -685,7 +703,11 @@ fun WorkspaceScreen(
                                     modifier = Modifier.size(14.dp)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text(text = "Sync Now", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                Text(
+                                    text = "Sync Now",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
                             }
                         }
                     }
@@ -827,7 +849,9 @@ fun WorkspaceScreen(
                             .fillMaxWidth()
                             .height(50.dp)
                             .testTag("translate_btn"),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF2563EB)
+                        ),
                         enabled = !isTranslating,
                         shape = RoundedCornerShape(10.dp)
                     ) {
@@ -940,7 +964,9 @@ fun WorkspaceScreen(
                                 .fillMaxWidth()
                                 .height(50.dp)
                                 .testTag("commit_btn"),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A34A)),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF16A34A)
+                            ),
                             shape = RoundedCornerShape(10.dp)
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
