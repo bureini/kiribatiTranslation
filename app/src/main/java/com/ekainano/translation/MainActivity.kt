@@ -58,9 +58,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -142,7 +142,7 @@ fun MainTranslationApp(
                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
                             Text(
-                                text = "v${BuildConfig.VERSION_NAME}",
+                                text = "v1.0.2",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Color.White
@@ -266,7 +266,7 @@ fun OnboardingAuthenticationScreen(
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
             Image(
-                painter = painterResource(id = R.drawable.img_hero_banner_1782856740510),
+                painter = painterResource(id = android.R.drawable.ic_menu_gallery),
                 contentDescription = "E-Kainano Hero Banner",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
@@ -516,7 +516,7 @@ fun OnboardingAuthenticationScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "E-Kainano Translation • Version ${BuildConfig.VERSION_NAME} (Build ${BuildConfig.VERSION_CODE})",
+            text = "E-Kainano Translation • Version v1.0.2",
             style = MaterialTheme.typography.labelSmall,
             color = Color.Gray,
             textAlign = TextAlign.Center,
@@ -630,10 +630,7 @@ fun WorkspaceScreen(
                                 .size(32.dp)
                                 .clip(CircleShape)
                                 .background(
-                                    when {
-                                        !isOnline -> Color(0xFFEF4444)
-                                        else -> Color(0xFF22C55E)
-                                    }
+                                    if (!isOnline) Color(0xFFEF4444) else Color(0xFF22C55E)
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
@@ -1060,7 +1057,7 @@ fun WorkspaceScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "E-Kainano Translation • Version ${BuildConfig.VERSION_NAME} (Build ${BuildConfig.VERSION_CODE})",
+                    text = "E-Kainano Translation • Version v1.0.2",
                     style = MaterialTheme.typography.labelSmall,
                     color = Color.Gray,
                     textAlign = TextAlign.Center,
