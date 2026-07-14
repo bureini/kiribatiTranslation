@@ -10,11 +10,11 @@ plugins {
 }
 
 android {
-  namespace = "com.example"
+  namespace = "com.ekainano.translation"
   compileSdk = 36
 
   defaultConfig {
-    applicationId = "com.aistudio.ekainano.tzxqmw"
+    applicationId = "com.ekainano.translation"
     minSdk = 24
     targetSdk = 35
     versionCode = 1
