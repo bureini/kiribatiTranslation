@@ -10,8 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  # Renamed to match your required branch protection rule name exactly
-  build:
+  validate-and-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -30,6 +29,11 @@ jobs:
         gradle-version: 9.3.1
         validate-wrappers: false
 
+    - name: Run Kotlin Lint Check (ktlint)
+      run: |
+        curl -sSLO https://github.com/pinterest/ktlint/releases/download/1.3.1/ktlint && chmod a+x ktlint
+        ./ktlint "app/src/**/*.kt" --reporter=plain
+
     - name: Create .env File
       run: |
         echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > .env
@@ -38,7 +42,6 @@ jobs:
       run: |
         keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
 
-    # Deep clean compilation to ensure the new namespace builds safely
     - name: Verify APK Compilation
       run: gradle clean assembleDebug --no-configuration-cache --refresh-dependencies
 
@@ -46,4 +49,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: verification-debug-apk
-        path: app/build/outputs/apk/debug/*.apk
+        path: app/build/outputs/apk/debug/app-debug.apk
