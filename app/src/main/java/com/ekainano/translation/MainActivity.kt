@@ -89,7 +89,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            // Context provider wrapper factory to prevent launch instance crash
             val context = LocalContext.current
             val application = context.applicationContext as Application
             val factory = ViewModelProvider.AndroidViewModelFactory.getInstance(application)
