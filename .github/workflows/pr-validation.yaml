@@ -37,11 +37,8 @@ jobs:
       run: |
         keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
 
-    - name: Clean Workspace
-      run: gradle clean --no-daemon --no-configuration-cache
-
     - name: Verify APK Compilation
-      run: gradle assembleDebug --no-daemon --no-configuration-cache
+      run: gradle assembleDebug
 
     - name: Upload Test Build Artifact
       uses: actions/upload-artifact@v4
