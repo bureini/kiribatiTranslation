@@ -13,6 +13,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.ekainano.translation.BuildConfig
 import com.ekainano.translation.data.AppDatabase
 import com.ekainano.translation.data.TranslationEntity
 import com.ekainano.translation.data.TranslationRepository
@@ -31,7 +32,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.Locale
 
 class TranslationViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -150,33 +150,13 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
     private val _showToastMessage = MutableStateFlow<String?>(null)
     val showToastMessage: StateFlow<String?> = _showToastMessage.asStateFlow()
 
-    fun setSourceText(text: String) {
-        _sourceText.value = text
-    }
-
-    fun setDirection(dir: String) {
-        _direction.value = dir
-    }
-
-    fun setEditedTranslation(text: String) {
-        _editedTranslation.value = text
-    }
-
-    fun setStructuralBreakdown(text: String) {
-        _structuralBreakdown.value = text
-    }
-
-    fun setCulturalNotes(text: String) {
-        _culturalNotes.value = text
-    }
-
-    fun clearErrorMessage() {
-        _errorMessage.value = null
-    }
-
-    fun clearToastMessage() {
-        _showToastMessage.value = null
-    }
+    fun setSourceText(text: String) { _sourceText.value = text }
+    fun setDirection(dir: String) { _direction.value = dir }
+    fun setEditedTranslation(text: String) { _editedTranslation.value = text }
+    fun setStructuralBreakdown(text: String) { _structuralBreakdown.value = text }
+    fun setCulturalNotes(text: String) { _culturalNotes.value = text }
+    fun clearErrorMessage() { _errorMessage.value = null }
+    fun clearToastMessage() { _showToastMessage.value = null }
 
     fun signInWithEmail(email: String) {
         val trimmedEmail = email.trim()
@@ -268,7 +248,7 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
     fun generateAIInsights(useAdvancedParticleMode: Boolean = false) {
         val text = _sourceText.value.trim()
         val dir = _direction.value
-        val apiKey = "" 
+        val apiKey = BuildConfig.GEMINI_API_KEY
 
         if (text.isEmpty()) {
             _errorMessage.value = "Please enter a phrase to translate."
@@ -277,6 +257,11 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
 
         if (!checkLinguisticValidity(text)) {
             _errorMessage.value = "Input check failed. Please avoid random gibberish character sequences."
+            return
+        }
+
+        if (apiKey == "MY_GEMINI_API_KEY" || apiKey.isEmpty()) {
+            _errorMessage.value = "Gemini API key is not configured in secrets. Please set GEMINI_API_KEY in the Secrets panel."
             return
         }
 
