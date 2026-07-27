@@ -52,33 +52,33 @@ android {
 }
 
 dependencies {
-    // Core Dependencies
+    // Core AndroidX & Lifecycle
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.activity.compose)
 
-    // Jetpack Compose BOM & Material 3 UI
+    // Jetpack Compose Framework & Material 3
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
 
-    // Room Database Engine (KSP)
+    // Local Room Database (KSP)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
 
-    // Network & Serialization Layers
+    // Network & Moshi JSON Parser
     implementation(libs.retrofit)
     implementation(libs.converter.moshi)
     implementation(libs.okhttp)
     implementation(libs.logging.interceptor)
     implementation(libs.moshi.kotlin)
 
-    // Testing Frameworks
+    // Unit Testing & Instrumentations
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
