@@ -24,7 +24,12 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-        cache: gradle
+
+    # Fix for corrupt gradle-wrapper.jar: Install Gradle CLI temporarily & regenerate wrapper
+    - name: Fix and Regenerate Gradle Wrapper Binary
+      run: |
+        sudo apt-get update && sudo apt-get install -y gradle
+        gradle wrapper --gradle-version 8.7 --distribution-type bin
 
     - name: Grant Execute Permission for Gradle Wrapper
       run: chmod +x gradlew
@@ -37,7 +42,7 @@ jobs:
       run: |
         keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
 
-    - name: Build Debug APK with Gradle Wrapper
+    - name: Build Debug APK with Regenerated Wrapper
       run: ./gradlew assembleDebug --no-daemon --stacktrace
 
     - name: Locate Generated APK
@@ -63,6 +68,6 @@ jobs:
           
           * Bidirectional Kiribati/English Gemini AI translation engine
           * Local Room Database synchronization & ledger tracking
-          * Jetpack Compose M3 UI implementation
+          * Jetpack Compose Material 3 UI
         draft: false
         prerelease: false
