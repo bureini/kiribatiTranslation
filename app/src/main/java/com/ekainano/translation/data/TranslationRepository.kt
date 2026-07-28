@@ -1,9 +1,11 @@
-package com.example.data
+package com.ekainano.translation.data
 
 import kotlinx.coroutines.flow.Flow
 
 class TranslationRepository(private val translationDao: TranslationDao) {
+
     val allTranslations: Flow<List<TranslationEntity>> = translationDao.getAllTranslations()
+    
     val unsyncedCount: Flow<Int> = translationDao.getUnsyncedCount()
 
     suspend fun insert(translation: TranslationEntity) {
@@ -11,15 +13,11 @@ class TranslationRepository(private val translationDao: TranslationDao) {
     }
 
     suspend fun delete(id: Int) {
-        translationDao.deleteTranslation(id)
-    }
-
-    suspend fun find(direction: String, sourceText: String): TranslationEntity? {
-        return translationDao.findTranslation(direction, sourceText)
+        translationDao.deleteTranslationById(id)
     }
 
     suspend fun clear() {
-        translationDao.clearAll()
+        translationDao.clearLedger()
     }
 
     suspend fun markAllAsSynced() {

@@ -1,4 +1,4 @@
-package com.example
+package com.ekainano.translation
 
 import android.os.Bundle
 import android.widget.Toast
@@ -6,19 +6,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,23 +24,21 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -64,7 +56,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -72,21 +63,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.data.TranslationEntity
-import com.example.ui.TranslationViewModel
-import com.example.ui.theme.MyApplicationTheme
+import com.ekainano.translation.data.TranslationEntity
+import com.ekainano.translation.ui.TranslationViewModel
+import com.ekainano.translation.ui.theme.MyApplicationTheme
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -97,7 +86,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val viewModel: TranslationViewModel = viewModel()
-            val isDarkTheme by viewModel.isDarkTheme.collectAsState()
+            val isDarkTheme by viewModel.isDarkTheme.collectAsStateWithLifecycle()
             MyApplicationTheme(darkTheme = isDarkTheme) {
                 MainTranslationApp(viewModel = viewModel)
             }
@@ -111,9 +100,9 @@ fun MainTranslationApp(
     viewModel: TranslationViewModel = viewModel()
 ) {
     val context = LocalContext.current
-    val userEmail by viewModel.currentUserEmail.collectAsState()
-    val toastMessage by viewModel.showToastMessage.collectAsState()
-    val errorMessage by viewModel.errorMessage.collectAsState()
+    val userEmail by viewModel.currentUserEmail.collectAsStateWithLifecycle()
+    val toastMessage by viewModel.showToastMessage.collectAsStateWithLifecycle()
+    val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
 
     LaunchedEffect(toastMessage) {
         toastMessage?.let {
@@ -163,7 +152,7 @@ fun MainTranslationApp(
                     containerColor = Color(0xFF1E3A8A)
                 ),
                 actions = {
-                    val isDarkTheme by viewModel.isDarkTheme.collectAsState()
+                    val isDarkTheme by viewModel.isDarkTheme.collectAsStateWithLifecycle()
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(end = 8.dp)
@@ -231,7 +220,7 @@ fun OnboardingAuthenticationScreen(
     var inputEmail by remember { mutableStateOf("") }
     var inputCode by remember { mutableStateOf("") }
 
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
     var hasNotificationPermission by remember {
         mutableStateOf(
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
@@ -257,8 +246,8 @@ fun OnboardingAuthenticationScreen(
         }
     }
 
-    val isAwaitingVerification by viewModel.isAwaitingVerification.collectAsState()
-    val verificationEmail by viewModel.verificationEmail.collectAsState()
+    val isAwaitingVerification by viewModel.isAwaitingVerification.collectAsStateWithLifecycle()
+    val verificationEmail by viewModel.verificationEmail.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -270,16 +259,31 @@ fun OnboardingAuthenticationScreen(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(180.dp),
+                .height(140.dp),
             shape = RoundedCornerShape(16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E3A8A)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.img_hero_banner_1782856740510),
-                contentDescription = "E-Kainano Hero Banner",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = Icons.Default.Translate,
+                        contentDescription = "E-Kainano Translation Logo",
+                        tint = Color.White,
+                        modifier = Modifier.size(56.dp)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "E-Kainano Translation Platform",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -540,14 +544,14 @@ fun WorkspaceScreen(
     userEmail: String,
     errorMessage: String?
 ) {
-    val sourceText by viewModel.sourceText.collectAsState()
-    val direction by viewModel.direction.collectAsState()
-    val isTranslating by viewModel.isTranslating.collectAsState()
-    val aiBaseline by viewModel.aiBaseline.collectAsState()
-    val editedTranslation by viewModel.editedTranslation.collectAsState()
-    val structuralBreakdown by viewModel.structuralBreakdown.collectAsState()
-    val culturalNotes by viewModel.culturalNotes.collectAsState()
-    val savedTranslations by viewModel.savedTranslations.collectAsState()
+    val sourceText by viewModel.sourceText.collectAsStateWithLifecycle()
+    val direction by viewModel.direction.collectAsStateWithLifecycle()
+    val isTranslating by viewModel.isTranslating.collectAsStateWithLifecycle()
+    val aiBaseline by viewModel.aiBaseline.collectAsStateWithLifecycle()
+    val editedTranslation by viewModel.editedTranslation.collectAsStateWithLifecycle()
+    val structuralBreakdown by viewModel.structuralBreakdown.collectAsStateWithLifecycle()
+    val culturalNotes by viewModel.culturalNotes.collectAsStateWithLifecycle()
+    val savedTranslations by viewModel.savedTranslations.collectAsStateWithLifecycle()
 
     var particleMode by remember { mutableStateOf(false) }
 
@@ -599,9 +603,9 @@ fun WorkspaceScreen(
         }
 
         item {
-            val isOnline by viewModel.isOnline.collectAsState()
-            val pendingSyncCount by viewModel.pendingSyncCount.collectAsState()
-            val isSyncing by viewModel.isSyncing.collectAsState()
+            val isOnline by viewModel.isOnline.collectAsStateWithLifecycle()
+            val pendingSyncCount by viewModel.pendingSyncCount.collectAsStateWithLifecycle()
+            val isSyncing by viewModel.isSyncing.collectAsStateWithLifecycle()
 
             Card(
                 modifier = Modifier
@@ -1192,7 +1196,7 @@ fun TranslationLedgerItem(
 
             if (item.structuralBreakdown.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(6.dp))
-                Divider(color = Color(0xFFF1F5F9))
+                HorizontalDivider(color = Color(0xFFF1F5F9))
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = "Particles & Structure:",
@@ -1210,7 +1214,7 @@ fun TranslationLedgerItem(
             if (item.culturalNotes.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(6.dp))
                 if (item.structuralBreakdown.isEmpty()) {
-                    Divider(color = Color(0xFFF1F5F9))
+                    HorizontalDivider(color = Color(0xFFF1F5F9))
                     Spacer(modifier = Modifier.height(6.dp))
                 }
                 Text(
@@ -1227,7 +1231,7 @@ fun TranslationLedgerItem(
             }
 
             Spacer(modifier = Modifier.height(8.dp))
-            Divider(color = Color(0xFFF1F5F9))
+            HorizontalDivider(color = Color(0xFFF1F5F9))
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "Attributed to: ${item.contributorEmail}",

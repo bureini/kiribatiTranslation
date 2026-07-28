@@ -1,4 +1,4 @@
-package com.example.ui
+package com.ekainano.translation.ui
 
 import android.app.Application
 import android.app.NotificationChannel
@@ -13,16 +13,17 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.data.AppDatabase
-import com.example.data.TranslationEntity
-import com.example.data.TranslationRepository
-import com.example.network.Content
-import com.example.network.GenerateContentRequest
-import com.example.network.GenerationConfig
-import com.example.network.Part
-import com.example.network.PropertySchema
-import com.example.network.ResponseSchema
-import com.example.network.RetrofitClient
+import com.ekainano.translation.BuildConfig
+import com.ekainano.translation.data.AppDatabase
+import com.ekainano.translation.data.TranslationEntity
+import com.ekainano.translation.data.TranslationRepository
+import com.ekainano.translation.network.Content
+import com.ekainano.translation.network.GenerateContentRequest
+import com.ekainano.translation.network.GenerationConfig
+import com.ekainano.translation.network.Part
+import com.ekainano.translation.network.PropertySchema
+import com.ekainano.translation.network.ResponseSchema
+import com.ekainano.translation.network.RetrofitClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -87,7 +88,6 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
-    // Expose all saved translations from database Flow
     val savedTranslations: StateFlow<List<TranslationEntity>> = repository.allTranslations
         .stateIn(
             scope = viewModelScope,
@@ -102,7 +102,6 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
             initialValue = 0
         )
 
-    // UI States
     private val _isDarkTheme = MutableStateFlow(sharedPrefs.getBoolean("dark_theme", false))
     val isDarkTheme: StateFlow<Boolean> = _isDarkTheme.asStateFlow()
 
@@ -115,7 +114,6 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
     private val _currentUserEmail = MutableStateFlow<String?>(sharedPrefs.getString("user_email", null))
     val currentUserEmail: StateFlow<String?> = _currentUserEmail.asStateFlow()
 
-    // Real human Verification workflow states
     private val _isAwaitingVerification = MutableStateFlow(false)
     val isAwaitingVerification: StateFlow<Boolean> = _isAwaitingVerification.asStateFlow()
 
@@ -128,7 +126,7 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
     private val _sourceText = MutableStateFlow("")
     val sourceText: StateFlow<String> = _sourceText.asStateFlow()
 
-    private val _direction = MutableStateFlow("GIL ➔ EN") // GIL ➔ EN or EN ➔ GIL
+    private val _direction = MutableStateFlow("GIL ➔ EN")
     val direction: StateFlow<String> = _direction.asStateFlow()
 
     private val _isTranslating = MutableStateFlow(false)
@@ -180,7 +178,6 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
         _showToastMessage.value = null
     }
 
-    // Sign In & Sign Out with robust real person validation
     fun signInWithEmail(email: String) {
         val trimmedEmail = email.trim()
         if (!trimmedEmail.endsWith("@gmail.com", ignoreCase = true)) {
@@ -189,14 +186,12 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
         }
 
         val username = trimmedEmail.substringBefore("@gmail.com", "")
-        // Real Google Account naming conventions: 6 to 30 characters, letters, numbers, and periods.
         val gmailRegex = Regex("^[a-zA-Z0-9.]{6,30}$")
         if (!username.matches(gmailRegex)) {
-            _errorMessage.value = "Invalid Gmail format. Real Gmail accounts must be between 6 and 30 characters long before @gmail.com, containing only letters, numbers, and periods."
+            _errorMessage.value = "Invalid Gmail format. Real Gmail accounts must be between 6 and 30 characters long before @gmail.com."
             return
         }
 
-        // Generate a random 6-digit secure dispatch code to verify active human user presence
         val code = (100000..999999).random().toString()
         _verificationEmail.value = trimmedEmail
         _generatedCode.value = code
@@ -204,7 +199,6 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
         _errorMessage.value = null
         _showToastMessage.value = "Verification code sent to $trimmedEmail"
 
-        // Fire status bar notification representing incoming email dispatch
         sendVerificationNotification(trimmedEmail, code)
     }
 
@@ -228,12 +222,11 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
                 .setContentTitle("Gmail Security Team <noreply@gmail.com>")
                 .setContentText("Security Alert: E-Kainano Translation verification code is $code")
                 .setStyle(NotificationCompat.BigTextStyle()
-                    .bigText("Hi there,\n\nWe received an authorization request for your Gmail account: $email.\n\nPlease enter the following secure activation code in the E-Kainano Translation app to verify your identity:\n\n🔑 $code\n\nIf you did not request this, please secure your Google account.\n\nE-Kainano Protection Team"))
+                    .bigText("Hi there,\n\nWe received an authorization request for your Gmail account: $email.\n\nPlease enter the following secure activation code in the E-Kainano Translation app to verify your identity:\n\n🔑 $code\n\nE-Kainano Protection Team"))
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true)
 
             notificationManager.notify(1337, builder.build())
-            Log.d("EKainanoAuth", "Sent simulated email containing verification passkey $code to $email")
         } catch (e: Exception) {
             Log.e("EKainanoAuth", "Failed to dispatch system notification", e)
         }
@@ -251,7 +244,7 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
             _errorMessage.value = null
             _showToastMessage.value = "Authenticated successfully with $email"
         } else {
-            _errorMessage.value = "Validation code does not match. Please verify the simulated secure email dispatch token."
+            _errorMessage.value = "Validation code does not match. Please verify the secure email token."
         }
     }
 
@@ -271,11 +264,10 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
         _showToastMessage.value = "Signed out of E-Kainano Translation"
     }
 
-    // Main Translation Request Logic
     fun generateAIInsights(useAdvancedParticleMode: Boolean = false) {
         val text = _sourceText.value.trim()
         val dir = _direction.value
-        val apiKey = com.example.BuildConfig.GEMINI_API_KEY
+        val apiKey = BuildConfig.GEMINI_API_KEY
 
         if (text.isEmpty()) {
             _errorMessage.value = "Please enter a phrase to translate."
@@ -297,14 +289,12 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                // Build system instruction with past corrections for learning (Dynamic AI Prompt Memory)
                 val baseInstruction = if (useAdvancedParticleMode) {
                     "You are an expert native Kiribati philologist. Isolate grammatical particles closely and return clean lowercase JSON."
                 } else {
                     "You are an elite, rapid-response bidirectional Kiribati and English translator. Return raw JSON matching the schema format strictly."
                 }
 
-                // Append up to 10 past corrections from database to simulate the Node.js context memory
                 val pastEntries = savedTranslations.value.take(10)
                 val contextBuilder = StringBuilder()
                 if (pastEntries.isNotEmpty()) {
@@ -316,7 +306,6 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
 
                 val fullSystemInstruction = baseInstruction + contextBuilder.toString()
 
-                // Response Schema config
                 val responseSchema = ResponseSchema(
                     type = "OBJECT",
                     properties = mapOf(
@@ -369,7 +358,6 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
-    // Save/Commit the edited translation to the Room database
     fun commitToLocalLedger() {
         val email = _currentUserEmail.value
         if (email == null) {
@@ -403,7 +391,6 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
                     contributorEmail = email
                 )
 
-                // Save to Room database
                 repository.insert(entity)
 
                 withContext(Dispatchers.Main) {
@@ -448,7 +435,6 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
         _isSyncing.value = true
         viewModelScope.launch {
             try {
-                // Simulate network upload delay for realism
                 kotlinx.coroutines.delay(1200)
                 repository.markAllAsSynced()
                 _showToastMessage.value = "Successfully synchronized offline entries to E-Kainano cloud ledger!"
@@ -460,15 +446,11 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
-    // Basic linguistic check from the sample JS app
     private fun checkLinguisticValidity(text: String): Boolean {
         if (text.length < 3) return true
-        // Check for 4 repeating characters
         if (Regex("([^aeiou\\s\\d\\W])\\1\\1\\1", RegexOption.IGNORE_CASE).containsMatchIn(text)) return false
-        // Check for pure consonants over 4 chars
         val vowels = Regex("[aeiou]", RegexOption.IGNORE_CASE)
         if (!vowels.containsMatchIn(text) && text.trim().length > 4) return false
-        // Avoid long streaks of 5+ consonants
         if (Regex("[bcdfghjklmnpqrstvwxyz]{5,}", RegexOption.IGNORE_CASE).containsMatchIn(text.replace("\\s+".toRegex(), ""))) return false
         return true
     }
