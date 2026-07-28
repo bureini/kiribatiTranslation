@@ -32,14 +32,13 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -270,7 +269,7 @@ fun OnboardingAuthenticationScreen(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
-                        imageVector = Icons.Default.Translate,
+                        imageVector = Icons.Default.Refresh,
                         contentDescription = "E-Kainano Translation Logo",
                         tint = Color.White,
                         modifier = Modifier.size(56.dp)
@@ -330,53 +329,14 @@ fun OnboardingAuthenticationScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Authentication Portal",
+                            text = "Gmail Account Verification",
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.titleMedium,
                             color = Color(0xFF1E3A8A)
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Credential Manager One-Tap Sign In
-                    Button(
-                        onClick = { viewModel.launchGoogleSignIn(context) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp)
-                            .testTag("google_one_tap_button"),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF4285F4)
-                        ),
-                        shape = RoundedCornerShape(10.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.AccountCircle,
-                                contentDescription = "Google Icon",
-                                tint = Color.White
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Sign in with Google",
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-                    HorizontalDivider(color = Color.LightGray)
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = "Or verify via manual Gmail token",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     OutlinedTextField(
                         value = inputEmail,
@@ -426,7 +386,7 @@ fun OnboardingAuthenticationScreen(
                         shape = RoundedCornerShape(10.dp)
                     ) {
                         Text(
-                            text = "Send Activation Token",
+                            text = "Access E-Kainano Translation",
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp,
                             color = Color.White
