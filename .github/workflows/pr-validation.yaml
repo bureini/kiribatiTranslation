@@ -17,7 +17,7 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v4
 
-    # Step 2: Set up JDK 17
+    # Step 2: Set up JDK 17 compiler environment
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
@@ -39,7 +39,7 @@ jobs:
         keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
 
     - name: Verify APK Compilation
-      run: gradle clean assembleDebug --no-configuration-cache --refresh-dependencies --stacktrace --info
+      run: gradle clean assembleDebug --no-configuration-cache --refresh-dependencies
 
     - name: Upload Test Build Artifact
       uses: actions/upload-artifact@v4
