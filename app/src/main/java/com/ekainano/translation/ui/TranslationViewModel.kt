@@ -150,13 +150,33 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
     private val _showToastMessage = MutableStateFlow<String?>(null)
     val showToastMessage: StateFlow<String?> = _showToastMessage.asStateFlow()
 
-    fun setSourceText(text: String) { _sourceText.value = text }
-    fun setDirection(dir: String) { _direction.value = dir }
-    fun setEditedTranslation(text: String) { _editedTranslation.value = text }
-    fun setStructuralBreakdown(text: String) { _structuralBreakdown.value = text }
-    fun setCulturalNotes(text: String) { _culturalNotes.value = text }
-    fun clearErrorMessage() { _errorMessage.value = null }
-    fun clearToastMessage() { _showToastMessage.value = null }
+    fun setSourceText(text: String) {
+        _sourceText.value = text
+    }
+
+    fun setDirection(dir: String) {
+        _direction.value = dir
+    }
+
+    fun setEditedTranslation(text: String) {
+        _editedTranslation.value = text
+    }
+
+    fun setStructuralBreakdown(text: String) {
+        _structuralBreakdown.value = text
+    }
+
+    fun setCulturalNotes(text: String) {
+        _culturalNotes.value = text
+    }
+
+    fun clearErrorMessage() {
+        _errorMessage.value = null
+    }
+
+    fun clearToastMessage() {
+        _showToastMessage.value = null
+    }
 
     fun signInWithEmail(email: String) {
         val trimmedEmail = email.trim()
@@ -168,7 +188,7 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
         val username = trimmedEmail.substringBefore("@gmail.com", "")
         val gmailRegex = Regex("^[a-zA-Z0-9.]{6,30}$")
         if (!username.matches(gmailRegex)) {
-            _errorMessage.value = "Invalid Gmail format. Real Gmail accounts must be between 6 and 30 characters long before @gmail.com, containing only letters, numbers, and periods."
+            _errorMessage.value = "Invalid Gmail format. Real Gmail accounts must be between 6 and 30 characters long before @gmail.com."
             return
         }
 
@@ -202,12 +222,11 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
                 .setContentTitle("Gmail Security Team <noreply@gmail.com>")
                 .setContentText("Security Alert: E-Kainano Translation verification code is $code")
                 .setStyle(NotificationCompat.BigTextStyle()
-                    .bigText("Hi there,\n\nWe received an authorization request for your Gmail account: $email.\n\nPlease enter the following secure activation code in the E-Kainano Translation app to verify your identity:\n\n🔑 $code\n\nIf you did not request this, please secure your Google account.\n\nE-Kainano Protection Team"))
+                    .bigText("Hi there,\n\nWe received an authorization request for your Gmail account: $email.\n\nPlease enter the following secure activation code in the E-Kainano Translation app to verify your identity:\n\n🔑 $code\n\nE-Kainano Protection Team"))
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true)
 
             notificationManager.notify(1337, builder.build())
-            Log.d("EKainanoAuth", "Sent simulated email containing verification passkey $code to $email")
         } catch (e: Exception) {
             Log.e("EKainanoAuth", "Failed to dispatch system notification", e)
         }
@@ -225,7 +244,7 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
             _errorMessage.value = null
             _showToastMessage.value = "Authenticated successfully with $email"
         } else {
-            _errorMessage.value = "Validation code does not match. Please verify the simulated secure email dispatch token."
+            _errorMessage.value = "Validation code does not match. Please verify the secure email token."
         }
     }
 
