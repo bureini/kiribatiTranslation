@@ -11,6 +11,10 @@ import android.net.NetworkRequest
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.CustomCredential
+import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.ekainano.translation.BuildConfig
@@ -24,6 +28,8 @@ import com.ekainano.translation.network.Part
 import com.ekainano.translation.network.PropertySchema
 import com.ekainano.translation.network.ResponseSchema
 import com.ekainano.translation.network.RetrofitClient
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -38,6 +44,7 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
     private val repository: TranslationRepository
     private val sharedPrefs = application.getSharedPreferences("ekainano_prefs", Context.MODE_PRIVATE)
     private val connectivityManager = application.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    private val credentialManager = CredentialManager.create(application)
 
     private val _isOnline = MutableStateFlow(checkInitialConnectivity())
     val isOnline: StateFlow<Boolean> = _isOnline.asStateFlow()
@@ -176,6 +183,43 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
 
     fun clearToastMessage() {
         _showToastMessage.value = null
+    }
+
+    // Google Credential Manager Authentication Flow
+    fun launchGoogleSignIn(context: Context) {
+        viewModelScope.launch {
+            try {
+                val googleIdOption = GetGoogleIdOption.Builder()
+                    .setFilterByAuthorizedAccounts(false)
+                    .setServerClientId("YOUR_SERVER_CLIENT_ID.apps.googleusercontent.com")
+                    .build()
+
+                val request = GetCredentialRequest.Builder()
+                    .addCredentialOption(googleIdOption)
+                    .build()
+
+                val result = credentialManager.getCredential(context = context, request = request)
+                val credential = result.credential
+
+                if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                    val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                    val email = googleIdTokenCredential.id
+                    
+                    sharedPrefs.edit().putString("user_email", email).apply()
+                    _currentUserEmail.value = email
+                    _errorMessage.value = null
+                    _showToastMessage.value = "Authenticated with Google Account: $email"
+                } else {
+                    _errorMessage.value = "Unrecognized Google Credential response type."
+                }
+            } catch (e: GetCredentialException) {
+                Log.e("EKainanoAuth", "Credential Manager failed", e)
+                _errorMessage.value = "Google Native Sign-In failed or was dismissed. Fallback to direct Email OTP verification below."
+            } catch (e: Exception) {
+                Log.e("EKainanoAuth", "Sign in error", e)
+                _errorMessage.value = "Authentication error: ${e.message}"
+            }
+        }
     }
 
     fun signInWithEmail(email: String) {
