@@ -256,6 +256,7 @@ fun OnboardingAuthenticationScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        // Hero banner using Compose Vector graphics to bypass AAPT2 image asset failures
         Card(
             modifier = Modifier
                 .fillMaxWidth()
