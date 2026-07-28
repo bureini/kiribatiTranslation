@@ -256,14 +256,13 @@ fun OnboardingAuthenticationScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Hero banner using Compose Vector graphics to bypass AAPT2 image asset failures
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(180.dp),
+                .height(140.dp),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = Color(0xFF1E3A8A)),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -272,9 +271,9 @@ fun OnboardingAuthenticationScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
                         imageVector = Icons.Default.Translate,
-                        contentDescription = "E-Kainano Translation Hero",
+                        contentDescription = "E-Kainano Translation Logo",
                         tint = Color.White,
-                        modifier = Modifier.size(64.dp)
+                        modifier = Modifier.size(56.dp)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
