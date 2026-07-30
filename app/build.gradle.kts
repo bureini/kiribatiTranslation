@@ -83,7 +83,7 @@ dependencies {
     implementation(libs.moshi.kotlin)
 
     // Android Credentials & Google Auth
-    implementation("androidx.credentials:credentials:1.0.1")
+    implementation("androidx.credentials:credentials:1.6.0")
     implementation("com.google.android.gms:play-services-auth:20.7.0")
 
     // Unit Testing & Instrumentations
