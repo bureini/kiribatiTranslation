@@ -29,7 +29,7 @@ jobs:
     - name: Fix and Regenerate Gradle Wrapper Binary
       run: |
         sudo apt-get update && sudo apt-get install -y gradle
-        gradle wrapper --gradle-version 8.7 --distribution-type bin
+        gradle wrapper --gradle-version 8.8 --distribution-type bin
 
     - name: Grant Execute Permission for Gradle Wrapper
       run: chmod +x gradlew
@@ -42,10 +42,21 @@ jobs:
       run: |
         keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
 
-    - name: Build Debug APK with Regenerated Wrapper
+    - name: Print environment & Gradle info
+      run: |
+        echo "=== Java ==="
+        java -version || true
+        echo "=== Gradle (wrapper if present) ==="
+        ./gradlew -v || gradle -v || true
+        echo "=== Project properties (app) ==="
+        ./gradlew -q :app:properties | sed -n '1,120p' || true
+        echo "=== Version catalog ==="
+        cat gradle/libs.versions.toml || true
+
+    - name: Build Debug APK with Regenerated Wrapper (verbose)
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      run: ./gradlew assembleDebug --no-daemon --stacktrace
+      run: ./gradlew assembleDebug --no-daemon --stacktrace --info
 
     - name: Locate Generated APK
       run: |
