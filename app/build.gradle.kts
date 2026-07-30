@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.ekainano.translation"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.ekainano.translation"
