@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -742,49 +744,104 @@ fun WorkspaceScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        OutlinedButton(
-                            onClick = { viewModel.setDirection("GIL ➔ EN") },
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = if (direction == "GIL ➔ EN") Color(0xFFDBEAFE) else Color.Transparent
-                            ),
-                            border = androidx.compose.foundation.BorderStroke(
-                                1.5.dp,
-                                if (direction == "GIL ➔ EN") Color(0xFF3B82F6) else Color.LightGray
-                            )
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("Kiribati", fontWeight = FontWeight.Bold)
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Icon(Icons.AutoMirrored.Filled.ArrowForward, "to", modifier = Modifier.size(14.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("English")
-                            }
-                        }
+                    // Replace the existing Row (lines 745-787 in MainActivity.kt) with this:
 
-                        OutlinedButton(
-                            onClick = { viewModel.setDirection("EN ➔ GIL") },
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = if (direction == "EN ➔ GIL") Color(0xFFDBEAFE) else Color.Transparent
-                            ),
-                            border = androidx.compose.foundation.BorderStroke(
-                                1.5.dp,
-                                if (direction == "EN ➔ GIL") Color(0xFF3B82F6) else Color.LightGray
-                            )
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("English")
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Icon(Icons.AutoMirrored.Filled.ArrowForward, "to", modifier = Modifier.size(14.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("Kiribati", fontWeight = FontWeight.Bold)
-                            }
-                        }
-                    }
+Surface(
+    modifier = Modifier
+        .fillMaxWidth()
+        .height(48.dp),
+    shape = RoundedCornerShape(24.dp),
+    color = Color(0xFFF1F5F9),
+    tonalElevation = 1.dp
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        val isGilToEn = direction == "GIL ➔ EN"
+
+        // Kiribati → English segment
+        Surface(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+                .clip(RoundedCornerShape(20.dp))
+                .clickable { viewModel.setDirection("GIL ➔ EN") },
+            shape = RoundedCornerShape(20.dp),
+            color = if (isGilToEn) Color.White else Color.Transparent,
+            shadowElevation = if (isGilToEn) 2.dp else 0.dp
+        ) {
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "Kiribati",
+                    fontWeight = if (isGilToEn) FontWeight.Bold else FontWeight.Normal,
+                    color = if (isGilToEn) Color(0xFF1E3A8A) else Color(0xFF64748B),
+                    fontSize = 14.sp
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = "to",
+                    modifier = Modifier.size(14.dp),
+                    tint = if (isGilToEn) Color(0xFF3B82F6) else Color(0xFF94A3B8)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    "English",
+                    fontWeight = if (isGilToEn) FontWeight.Bold else FontWeight.Normal,
+                    color = if (isGilToEn) Color(0xFF1E3A8A) else Color(0xFF64748B),
+                    fontSize = 14.sp
+                )
+            }
+        }
+
+        // English → Kiribati segment
+        Surface(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+                .clip(RoundedCornerShape(20.dp))
+                .clickable { viewModel.setDirection("EN ➔ GIL") },
+            shape = RoundedCornerShape(20.dp),
+            color = if (!isGilToEn) Color.White else Color.Transparent,
+            shadowElevation = if (!isGilToEn) 2.dp else 0.dp
+        ) {
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "English",
+                    fontWeight = if (!isGilToEn) FontWeight.Bold else FontWeight.Normal,
+                    color = if (!isGilToEn) Color(0xFF1E3A8A) else Color(0xFF64748B),
+                    fontSize = 14.sp
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = "to",
+                    modifier = Modifier.size(14.dp),
+                    tint = if (!isGilToEn) Color(0xFF3B82F6) else Color(0xFF94A3B8)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    "Kiribati",
+                    fontWeight = if (!isGilToEn) FontWeight.Bold else FontWeight.Normal,
+                    color = if (!isGilToEn) Color(0xFF1E3A8A) else Color(0xFF64748B),
+                    fontSize = 14.sp
+                )
+            }
+        }
+    }
+}
+
 
                     Spacer(modifier = Modifier.height(16.dp))
 
