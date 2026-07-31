@@ -2,11 +2,12 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.google.devtools.ksp)
+    alias(libs.plugins.compose.compiler)
 }
 
 android {
     namespace = "com.ekainano.translation"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.ekainano.translation"
@@ -19,6 +20,10 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // GEMINI_API_KEY buildConfigField - read from environment in CI or fallback to placeholder
+        val geminiKey: String = System.getenv("GEMINI_API_KEY") ?: "MY_GEMINI_API_KEY"
+        buildConfigField("String", "GEMINI_API_KEY", "\"${geminiKey}\"")
     }
 
     buildTypes {
@@ -77,6 +82,10 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.logging.interceptor)
     implementation(libs.moshi.kotlin)
+
+    // Android Credentials & Google Auth
+    implementation("androidx.credentials:credentials:1.6.0")
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
 
     // Unit Testing & Instrumentations
     testImplementation(libs.junit)
