@@ -59,10 +59,29 @@ jobs:
         echo "=== Version catalog ==="
         cat gradle/libs.versions.toml || true
 
+    - name: Resolve Version from Tag
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          RAW_TAG="${{ inputs.release_tag }}"
+        else
+          RAW_TAG="${{ github.ref_name }}"
+        fi
+        # Strip a leading 'v' (v1.0.3 -> 1.0.3)
+        VERSION_NAME="${RAW_TAG#v}"
+        # versionCode: use the CI run number, which always increases
+        VERSION_CODE="${{ github.run_number }}"
+        echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
+        echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
+        echo "Resolved versionName=$VERSION_NAME versionCode=$VERSION_CODE"
+
     - name: Build Debug APK with Regenerated Wrapper (verbose)
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      run: ./gradlew assembleDebug --no-daemon --stacktrace --info
+      run: |
+        ./gradlew assembleDebug --no-daemon --stacktrace --info \
+          -PappVersionName=${{ steps.version.outputs.version_name }} \
+          -PappVersionCode=${{ steps.version.outputs.version_code }}
 
     - name: Locate Generated APK
       run: |

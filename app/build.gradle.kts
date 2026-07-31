@@ -13,8 +13,11 @@ android {
         applicationId = "com.ekainano.translation"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.2"
+
+        // Version comes from CI (git tag) via -PappVersionName / -PappVersionCode.
+        // Falls back to local defaults when building outside CI (e.g. Android Studio).
+        versionCode = (project.findProperty("appVersionCode") as String?)?.toIntOrNull() ?: 1
+        versionName = (project.findProperty("appVersionName") as String?) ?: "1.0.2-local"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -45,9 +48,6 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
-    }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.8"
     }
     packaging {
         resources {
