@@ -13,6 +13,10 @@ on:
         description: 'Tag name for this release (e.g. v1.0.3)'
         required: true
         default: 'v0.0.0'
+      release_notes:
+        description: 'What changed in this release'
+        required: false
+        default: 'Bug fixes and improvements.'
 
 permissions:
   contents: write
@@ -102,10 +106,6 @@ jobs:
         name: E-Kainano Translation Release ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
         tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
         body: |
-          Official release build for E-Kainano Kiribati Translation app.
-
-          * Bidirectional Kiribati/English Gemini AI translation engine
-          * Local Room Database synchronization & ledger tracking
-          * Jetpack Compose Material 3 UI
+          ${{ github.event_name == 'workflow_dispatch' && inputs.release_notes || 'Official release build for E-Kainano Kiribati Translation app.' }}
         draft: false
         prerelease: false
