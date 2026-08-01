@@ -54,6 +54,15 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    // Rename the output APK to include the version name, e.g. app-debug-v1.0.7-beta.apk
+    applicationVariants.all {
+        outputs.all {
+            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            val versionNameForFile = (project.findProperty("appVersionName") as String?) ?: "1.0.2-local"
+            output.outputFileName = "app-debug-v${versionNameForFile}.apk"
+        }
+    }
 }
 
 dependencies {
