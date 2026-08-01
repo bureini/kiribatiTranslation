@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -66,6 +67,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
@@ -531,7 +533,7 @@ fun OnboardingAuthenticationScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    OutlinedButton(
+                    Button(
                         onClick = {
                             viewModel.cancelVerification()
                             inputCode = ""
@@ -540,10 +542,10 @@ fun OnboardingAuthenticationScreen(
                             .fillMaxWidth()
                             .height(44.dp),
                         shape = RoundedCornerShape(50),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = Color(0xFF60A5FA)
-                        ),
-                        border = BorderStroke(1.5.dp, Color(0xFF60A5FA))
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFE2E8F0),
+                            contentColor = Color(0xFF1E3A8A)
+                        )
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
