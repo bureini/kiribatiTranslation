@@ -118,33 +118,31 @@ fun MainTranslationApp(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                // Replace lines 119–150 in MainActivity.kt (the "title = { ... }" block) with this:
-               title = {
-                 Row(verticalAlignment = Alignment.CenterVertically) {
-                     Box(
-            modifier = Modifier
-                .size(36.dp)
-                .background(Color.White.copy(alpha = 0.15f), CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.Refresh,
-                contentDescription = "App Logo",
-                tint = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.size(20.dp)
-            )
-        }
-        Spacer(modifier = Modifier.width(10.dp))
-        Text(
-            text = "E-Kainano Translation",
-            fontWeight = FontWeight.Bold,
-            fontFamily = FontFamily.SansSerif,
-            color = MaterialTheme.colorScheme.onPrimary,
-            maxLines = 1
-        )
-    }
-},
-,
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .background(Color.White.copy(alpha = 0.15f), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "App Logo",
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = "E-Kainano Translation",
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.SansSerif,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            maxLines = 1
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF1E3A8A)
                 ),
@@ -254,76 +252,52 @@ fun OnboardingAuthenticationScreen(
         verticalArrangement = Arrangement.Center
     ) {
         
-        // Replace lines 260–288 in MainActivity.kt (the banner "Card(...)" block) with this:
-
-Card(
-    modifier = Modifier
-        .fillMaxWidth()
-        .height(160.dp),
-    shape = RoundedCornerShape(20.dp),
-    colors = CardDefaults.cardColors(containerColor = Color(0xFF1E3A8A)),
-    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(Color(0xFF1E3A8A), Color(0xFF2B4FA8))
-                )
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(160.dp),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E3A8A)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
             Box(
                 modifier = Modifier
-                    .size(64.dp)
-                    .background(Color.White.copy(alpha = 0.15f), CircleShape),
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color(0xFF1E3A8A), Color(0xFF2B4FA8))
+                        )
+                    ),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = "E-Kainano Translation Logo",
-                    tint = Color.White,
-                    modifier = Modifier.size(34.dp)
-                )
-            }
-            Spacer(modifier = Modifier.height(10.dp))
-            Text(
-                text = "E-Kainano Translation Platform",
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.titleMedium
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = "Community-verified Kiribati translations",
-                color = Color.White.copy(alpha = 0.75f),
-                fontSize = 12.sp
-            )
-        }
-    }
-}
- {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = Icons.Default.Refresh,
-                        contentDescription = "E-Kainano Translation Logo",
-                        tint = Color.White,
-                        modifier = Modifier.size(56.dp)
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .background(Color.White.copy(alpha = 0.15f), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "E-Kainano Translation Logo",
+                            tint = Color.White,
+                            modifier = Modifier.size(34.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
                     Text(
                         text = "E-Kainano Translation Platform",
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleMedium
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "Community-verified Kiribati translations",
+                        color = Color.White.copy(alpha = 0.75f),
+                        fontSize = 12.sp
                     )
                 }
             }
