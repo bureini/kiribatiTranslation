@@ -643,7 +643,7 @@ fun WorkspaceScreen(
                         Text(
                             text = userEmail,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = Color(0xFF1E293B)
                         )
                     }
                 }
@@ -786,12 +786,10 @@ fun WorkspaceScreen(
                         text = "1. AI Insights Translation Layer",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1E3A8A)
+                        color = MaterialTheme.colorScheme.primary
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
-
-                    // Replace the existing Row (lines 745-787 in MainActivity.kt) with this:
 
 Surface(
     modifier = Modifier
@@ -969,7 +967,7 @@ Surface(
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
                                 text = "No worries — you can skip AI Insights and enter your translation manually below instead.",
-                                color = Color(0xFF64748B),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.Medium
                             )
@@ -982,7 +980,7 @@ Surface(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(10.dp),
                                 colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = Color(0xFF1E3A8A)
+                                    contentColor = MaterialTheme.colorScheme.primary
                                 )
                             ) {
                                 Text("Skip AI, Enter Manually", fontWeight = FontWeight.Bold)
@@ -1034,7 +1032,7 @@ Surface(
                             text = if (aiBaseline.isNotEmpty()) "2. Edit & Attribute to Device Ledger" else "2. Manual Entry (Offline) & Attribute to Device Ledger",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF16A34A)
+                            color = MaterialTheme.colorScheme.secondary
                         )
 
                         Spacer(modifier = Modifier.height(14.dp))
