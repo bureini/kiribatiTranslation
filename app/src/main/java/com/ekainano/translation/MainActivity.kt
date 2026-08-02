@@ -90,6 +90,7 @@ import com.ekainano.translation.ui.theme.MyApplicationTheme
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.delay
 
 
 class MainActivity : ComponentActivity() {
@@ -600,6 +601,7 @@ fun WorkspaceScreen(
     val savedTranslations by viewModel.savedTranslations.collectAsStateWithLifecycle()
 
     var particleMode by remember { mutableStateOf(false) }
+    var manualEntryMode by remember { mutableStateOf(false) }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -946,19 +948,55 @@ Surface(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
+                    var cooldownSeconds by remember { mutableStateOf(0) }
+
+                    LaunchedEffect(cooldownSeconds) {
+                        if (cooldownSeconds > 0) {
+                            delay(1000)
+                            cooldownSeconds -= 1
+                        }
+                    }
+
                     AnimatedVisibility(visible = errorMessage != null) {
-                        errorMessage?.let {
+                        Column(modifier = Modifier.padding(bottom = 10.dp)) {
+                            errorMessage?.let {
+                                Text(
+                                    text = it,
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(6.dp))
                             Text(
-                                text = it,
-                                color = MaterialTheme.colorScheme.error,
+                                text = "No worries — you can skip AI Insights and enter your translation manually below instead.",
+                                color = Color(0xFF64748B),
                                 style = MaterialTheme.typography.bodySmall,
-                                modifier = Modifier.padding(bottom = 10.dp)
+                                fontWeight = FontWeight.Medium
                             )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            OutlinedButton(
+                                onClick = {
+                                    manualEntryMode = true
+                                    viewModel.clearErrorMessage()
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = Color(0xFF1E3A8A)
+                                )
+                            ) {
+                                Text("Skip AI, Enter Manually", fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
 
                     Button(
-                        onClick = { viewModel.generateAIInsights(particleMode) },
+                        onClick = {
+                            if (cooldownSeconds == 0) {
+                                viewModel.generateAIInsights(particleMode)
+                                cooldownSeconds = 5
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp)
@@ -966,11 +1004,13 @@ Surface(
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF2563EB)
                         ),
-                        enabled = !isTranslating,
+                        enabled = !isTranslating && cooldownSeconds == 0,
                         shape = RoundedCornerShape(10.dp)
                     ) {
                         if (isTranslating) {
                             Text("Contacting Language Nodes...", color = Color.White)
+                        } else if (cooldownSeconds > 0) {
+                            Text("Please wait ${cooldownSeconds}s...", color = Color.White)
                         } else {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Default.Refresh, contentDescription = "Globe Icon", tint = Color.White)
@@ -983,7 +1023,7 @@ Surface(
             }
         }
 
-        if (aiBaseline.isNotEmpty()) {
+        if (aiBaseline.isNotEmpty() || manualEntryMode) {
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -991,7 +1031,7 @@ Surface(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "2. Edit & Attribute to Device Ledger",
+                            text = if (aiBaseline.isNotEmpty()) "2. Edit & Attribute to Device Ledger" else "2. Manual Entry (Offline) & Attribute to Device Ledger",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF16A34A)
@@ -999,27 +1039,29 @@ Surface(
 
                         Spacer(modifier = Modifier.height(14.dp))
 
-                        OutlinedCard(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFFF9FAFB))
-                        ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text(
-                                    text = "Original AI Baseline",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = aiBaseline,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Medium
-                                )
+                        if (aiBaseline.isNotEmpty()) {
+                            OutlinedCard(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFFF9FAFB))
+                            ) {
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Text(
+                                        text = "Original AI Baseline",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = aiBaseline,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
                             }
-                        }
 
-                        Spacer(modifier = Modifier.height(14.dp))
+                            Spacer(modifier = Modifier.height(14.dp))
+                        }
 
                         OutlinedTextField(
                             value = editedTranslation,
