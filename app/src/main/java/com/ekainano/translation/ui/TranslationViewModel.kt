@@ -198,7 +198,7 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
         _generatedCode.value = code
         _isAwaitingVerification.value = true
         _errorMessage.value = null
-        _showToastMessage.value = "Verification code sent to $trimmedEmail"
+        _showToastMessage.value = "Verification code sent to your notifications"
 
         sendVerificationNotification(trimmedEmail, code)
     }
@@ -207,23 +207,23 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
         try {
             val context = getApplication<Application>().applicationContext
             val channelId = "ekainano_verification_channel"
-            val channelName = "Gmail Verification Simulator"
+            val channelName = "E-Kainano Verification"
 
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val channel = NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_HIGH).apply {
-                    description = "Simulates incoming verification email dispatch from Google Services"
+                    description = "Delivers your E-Kainano Translation sign-in verification codes"
                 }
                 notificationManager.createNotificationChannel(channel)
             }
 
             val builder = NotificationCompat.Builder(context, channelId)
                 .setSmallIcon(android.R.drawable.ic_dialog_email)
-                .setContentTitle("Gmail Security Team <noreply@gmail.com>")
-                .setContentText("Security Alert: E-Kainano Translation verification code is $code")
+                .setContentTitle("E-Kainano Translation")
+                .setContentText("Your verification code is $code")
                 .setStyle(NotificationCompat.BigTextStyle()
-                    .bigText("Hi there,\n\nWe received an authorization request for your Gmail account: $email.\n\nPlease enter the following secure activation code in the E-Kainano Translation app to verify your identity:\n\n🔑 $code\n\nE-Kainano Protection Team"))
+                    .bigText("Hi there,\n\nUse the code below to sign in to E-Kainano Translation as $email:\n\n🔑 $code\n\nIf you didn't request this, you can safely ignore this notification."))
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true)
 
