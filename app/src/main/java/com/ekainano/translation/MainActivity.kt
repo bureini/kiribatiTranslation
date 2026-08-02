@@ -320,7 +320,7 @@ fun OnboardingAuthenticationScreen(
             text = "Digitizing Kiribati (GIL)",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF1E3A8A),
+            color = MaterialTheme.colorScheme.primary,
             textAlign = TextAlign.Center
         )
 
@@ -354,14 +354,14 @@ fun OnboardingAuthenticationScreen(
                         Icon(
                             imageVector = Icons.Default.Lock,
                             contentDescription = "Lock Icon",
-                            tint = Color(0xFF1E3A8A)
+                            tint = MaterialTheme.colorScheme.primary
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Gmail Account Verification",
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.titleMedium,
-                            color = Color(0xFF1E3A8A)
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
 
@@ -380,8 +380,8 @@ fun OnboardingAuthenticationScreen(
                             Icon(imageVector = Icons.Default.Email, contentDescription = "Email Icon")
                         },
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF1E3A8A),
-                            focusedLabelColor = Color(0xFF1E3A8A)
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary
                         )
                     )
 
@@ -441,14 +441,14 @@ fun OnboardingAuthenticationScreen(
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
                             contentDescription = "Check Circle",
-                            tint = Color(0xFF16A34A)
+                            tint = MaterialTheme.colorScheme.secondary
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Confirm Validation Code",
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.titleMedium,
-                            color = Color(0xFF16A34A)
+                            color = MaterialTheme.colorScheme.secondary
                         )
                     }
 
@@ -493,8 +493,8 @@ fun OnboardingAuthenticationScreen(
                             Icon(imageVector = Icons.Default.Lock, contentDescription = "OTP Lock")
                         },
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF16A34A),
-                            focusedLabelColor = Color(0xFF16A34A)
+                            focusedBorderColor = MaterialTheme.colorScheme.secondary,
+                            focusedLabelColor = MaterialTheme.colorScheme.secondary
                         )
                     )
 
