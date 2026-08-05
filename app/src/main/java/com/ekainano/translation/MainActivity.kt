@@ -35,8 +35,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Email
@@ -85,6 +86,7 @@ import com.ekainano.translation.R
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -897,7 +899,8 @@ Surface(
 
                     val context = LocalContext.current
                     val resourceLinks = listOf(
-                        Triple("Wiktionary", "https://en.wiktionary.org/wiki/Category:Gilbertese_language", Icons.AutoMirrored.Filled.MenuBook),
+                        Triple("KIR-EN Dictionary", "https://www.trussel.com/kir/dic/dic_a.htm", Icons.Default.Book),
+                        Triple("Wiktionary", "https://en.wiktionary.org/wiki/Category:Gilbertese_language", Icons.Default.MenuBook),
                         Triple("Wikipedia (GIL)", "https://gil.wikipedia.org", Icons.Default.Public),
                         Triple("Google Translate", "https://translate.google.com", Icons.Default.Translate)
                     )
@@ -929,7 +932,8 @@ Surface(
                                     Text(
                                         text = label,
                                         fontSize = 10.sp,
-                                        maxLines = 1
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                 }
                             }
