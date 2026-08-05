@@ -1,5 +1,7 @@
 package com.ekainano.translation
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -33,11 +35,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
@@ -320,7 +325,7 @@ fun OnboardingAuthenticationScreen(
             text = "Digitizing Kiribati (GIL)",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF1E3A8A),
+            color = MaterialTheme.colorScheme.primary,
             textAlign = TextAlign.Center
         )
 
@@ -354,14 +359,14 @@ fun OnboardingAuthenticationScreen(
                         Icon(
                             imageVector = Icons.Default.Lock,
                             contentDescription = "Lock Icon",
-                            tint = Color(0xFF1E3A8A)
+                            tint = MaterialTheme.colorScheme.primary
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Gmail Account Verification",
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.titleMedium,
-                            color = Color(0xFF1E3A8A)
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
 
@@ -380,8 +385,8 @@ fun OnboardingAuthenticationScreen(
                             Icon(imageVector = Icons.Default.Email, contentDescription = "Email Icon")
                         },
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF1E3A8A),
-                            focusedLabelColor = Color(0xFF1E3A8A)
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary
                         )
                     )
 
@@ -441,14 +446,14 @@ fun OnboardingAuthenticationScreen(
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
                             contentDescription = "Check Circle",
-                            tint = Color(0xFF16A34A)
+                            tint = MaterialTheme.colorScheme.secondary
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Confirm Validation Code",
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.titleMedium,
-                            color = Color(0xFF16A34A)
+                            color = MaterialTheme.colorScheme.secondary
                         )
                     }
 
@@ -462,14 +467,14 @@ fun OnboardingAuthenticationScreen(
                     ) {
                         Column(modifier = Modifier.padding(12.dp)) {
                             Text(
-                                text = "📬 Security Gateway Verification",
+                                text = "🔔 Security Gateway Verification",
                                 fontWeight = FontWeight.Bold,
                                 style = MaterialTheme.typography.labelMedium,
                                 color = Color(0xFF1E3A8A)
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "A verification email was dispatched to $verificationEmail. Check your inbox or pull down your Android Status Bar/Notification tray to find the secure activation code.",
+                                text = "A verification code was sent to this device for $verificationEmail. Pull down your Android Status Bar/Notification tray to find your secure activation code.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color(0xFF1E40AF)
                             )
@@ -493,8 +498,8 @@ fun OnboardingAuthenticationScreen(
                             Icon(imageVector = Icons.Default.Lock, contentDescription = "OTP Lock")
                         },
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF16A34A),
-                            focusedLabelColor = Color(0xFF16A34A)
+                            focusedBorderColor = MaterialTheme.colorScheme.secondary,
+                            focusedLabelColor = MaterialTheme.colorScheme.secondary
                         )
                     )
 
@@ -643,7 +648,7 @@ fun WorkspaceScreen(
                         Text(
                             text = userEmail,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = Color(0xFF1E293B)
                         )
                     }
                 }
@@ -786,12 +791,10 @@ fun WorkspaceScreen(
                         text = "1. AI Insights Translation Layer",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1E3A8A)
+                        color = MaterialTheme.colorScheme.primary
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
-
-                    // Replace the existing Row (lines 745-787 in MainActivity.kt) with this:
 
 Surface(
     modifier = Modifier
@@ -892,6 +895,49 @@ Surface(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    val context = LocalContext.current
+                    val resourceLinks = listOf(
+                        Triple("Wiktionary", "https://en.wiktionary.org/wiki/Category:Gilbertese_language", Icons.AutoMirrored.Filled.MenuBook),
+                        Triple("Wikipedia (GIL)", "https://gil.wikipedia.org", Icons.Default.Public),
+                        Triple("Google Translate", "https://translate.google.com", Icons.Default.Translate)
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        resourceLinks.forEach { (label, url, icon) ->
+                            OutlinedButton(
+                                onClick = {
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                    context.startActivity(intent)
+                                },
+                                modifier = Modifier.weight(1f),
+                                contentPadding = PaddingValues(horizontal = 6.dp, vertical = 8.dp),
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.primary
+                                )
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Icon(
+                                        imageVector = icon,
+                                        contentDescription = "Open $label",
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = label,
+                                        fontSize = 10.sp,
+                                        maxLines = 1
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
                     OutlinedTextField(
                         value = sourceText,
                         onValueChange = { viewModel.setSourceText(it) },
@@ -969,7 +1015,7 @@ Surface(
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
                                 text = "No worries — you can skip AI Insights and enter your translation manually below instead.",
-                                color = Color(0xFF64748B),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.Medium
                             )
@@ -982,7 +1028,7 @@ Surface(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(10.dp),
                                 colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = Color(0xFF1E3A8A)
+                                    contentColor = MaterialTheme.colorScheme.primary
                                 )
                             ) {
                                 Text("Skip AI, Enter Manually", fontWeight = FontWeight.Bold)
@@ -1034,7 +1080,7 @@ Surface(
                             text = if (aiBaseline.isNotEmpty()) "2. Edit & Attribute to Device Ledger" else "2. Manual Entry (Offline) & Attribute to Device Ledger",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF16A34A)
+                            color = MaterialTheme.colorScheme.secondary
                         )
 
                         Spacer(modifier = Modifier.height(14.dp))
