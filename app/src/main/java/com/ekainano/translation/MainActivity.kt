@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -949,7 +950,7 @@ Surface(
                         placeholder = { Text("E.g., Mauri ko uara? / Hello, how are you?") },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(100.dp)
+                            .heightIn(min = 100.dp)
                             .testTag("source_text_input"),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFF1E3A8A),
