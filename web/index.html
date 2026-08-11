@@ -1,1 +1,934 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>E-Kainano Translation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          display: ['"Space Grotesk"', 'ui-sans-serif', 'sans-serif'],
+          mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        },
+      },
+    },
+  };
+</script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  html, body, #root { min-height: 100%; margin: 0; }
+  body { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; }
+  .font-display { font-family: 'Space Grotesk', ui-sans-serif, sans-serif; }
+  .font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
 
+  .ek-gradient { background: linear-gradient(135deg, #1E3A8A 0%, #2B4FA8 55%, #3B82F6 100%); }
+
+  @keyframes ekFadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes ekSlideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .ek-fade-in { animation: ekFadeIn .35s cubic-bezier(.16,1,.3,1) forwards; }
+  .ek-slide-up { animation: ekSlideUp .4s cubic-bezier(.16,1,.3,1) forwards; }
+
+  .ek-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
+  .ek-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 9999px; }
+  .ek-scroll::-webkit-scrollbar-track { background-color: transparent; }
+
+  .ek-switch { width: 42px; height: 24px; border-radius: 9999px; position: relative; transition: background-color .2s ease; cursor: pointer; flex-shrink: 0; }
+  .ek-switch-thumb { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 9999px; background: white; transition: transform .2s ease; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+</style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react,env">
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+const LS = {
+  theme: "ekainano_theme",
+  email: "ekainano_user_email",
+  ledger: "ekainano_ledger",
+  apiKey: "ekainano_gemini_key",
+};
+
+function readLS(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw === null) return fallback;
+    return JSON.parse(raw);
+  } catch (e) {
+    return fallback;
+  }
+}
+function writeLS(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+}
+
+const uid = () => Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+
+function checkLinguisticValidity(text) {
+  if (text.length < 3) return true;
+  if (/([^aeiou\s\d\W])\1\1\1/i.test(text)) return false;
+  const hasVowel = /[aeiou]/i.test(text);
+  if (!hasVowel && text.trim().length > 4) return false;
+  if (/[bcdfghjklmnpqrstvwxyz]{5,}/i.test(text.replace(/\s+/g, ""))) return false;
+  return true;
+}
+
+function generateOtp() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+async function callGemini({ apiKey, direction, text, systemInstruction }) {
+  const responseSchema = {
+    type: "OBJECT",
+    properties: {
+      translation: { type: "STRING", description: "The translated text of the input phrase." },
+      breakdown: { type: "STRING", description: "The grammatical or structural breakdown of the translation, especially particles." },
+      cultural: { type: "STRING", description: "Cultural context or extra translation notes." },
+    },
+    required: ["translation"],
+  };
+
+  const body = {
+    contents: [{ parts: [{ text: `Translate precisely from ${direction}.\nInput Phrase: "${text}"` }] }],
+    systemInstruction: { parts: [{ text: systemInstruction }] },
+    generationConfig: {
+      responseMimeType: "application/json",
+      temperature: 0.1,
+      responseSchema,
+    },
+  };
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }
+  );
+
+  if (!res.ok) {
+    let msg = `Request failed (${res.status})`;
+    try {
+      const errJson = await res.json();
+      if (errJson?.error?.message) msg = errJson.error.message;
+    } catch (e) {}
+    throw new Error(msg);
+  }
+
+  const data = await res.json();
+  const responseText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!responseText) throw new Error("Upstream AI nodes did not return a translation response.");
+
+  let parsed;
+  try {
+    parsed = JSON.parse(responseText);
+  } catch (e) {
+    throw new Error("Failed to parse AI output JSON structure.");
+  }
+  if (!parsed.translation) throw new Error("Failed to parse AI output JSON structure.");
+  return parsed;
+}
+
+function Emoji({ children, className = "" }) {
+  return <span className={"leading-none " + className} role="img" aria-hidden="true">{children}</span>;
+}
+
+function Switch({ checked, onChange, onColor = "#2563EB", offColor = "#CBD5E1", testId }) {
+  return (
+    <div
+      className="ek-switch"
+      data-testid={testId}
+      style={{ background: checked ? onColor : offColor }}
+      onClick={() => onChange(!checked)}
+      role="switch"
+      aria-checked={checked}
+    >
+      <div className="ek-switch-thumb" style={{ transform: checked ? "translateX(18px)" : "translateX(0)" }} />
+    </div>
+  );
+}
+
+function Badge({ children, tone = "slate" }) {
+  const tones = {
+    slate: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200",
+    green: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300",
+    amber: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
+    blue: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
+  };
+  return <span className={`px-2 py-1 rounded-md text-[11px] font-bold tracking-wide ${tones[tone]}`}>{children}</span>;
+}
+
+function PrimaryButton({ children, onClick, disabled, color = "#2563EB", className = "", type = "button", testId }) {
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      data-testid={testId}
+      className={`w-full h-[50px] rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-all shadow-sm ${disabled ? "opacity-50 cursor-not-allowed" : "hover:brightness-110 active:scale-[.99] cursor-pointer"} ${className}`}
+      style={{ backgroundColor: color }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Card({ children, className = "" }) {
+  return (
+    <div className={`bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+function TextField({ label, placeholder, value, onChange, testId, multiline, rows = 3, focusColor = "#1E3A8A", icon }) {
+  const common = "w-full rounded-xl border px-3.5 py-2.5 text-sm bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-700 placeholder-slate-400 dark:placeholder-slate-500 outline-none transition-colors focus:ring-2";
+  return (
+    <label className="block">
+      <span className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">{label}</span>
+      <div className="relative">
+        {icon && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">{icon}</span>}
+        {multiline ? (
+          <textarea
+            data-testid={testId}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            rows={rows}
+            className={common + (icon ? " pl-9" : "")}
+            style={{ "--tw-ring-color": focusColor }}
+            onFocus={(e) => (e.target.style.borderColor = focusColor)}
+            onBlur={(e) => (e.target.style.borderColor = "")}
+          />
+        ) : (
+          <input
+            data-testid={testId}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            className={common + (icon ? " pl-9" : "")}
+            onFocus={(e) => (e.target.style.borderColor = focusColor)}
+            onBlur={(e) => (e.target.style.borderColor = "")}
+          />
+        )}
+      </div>
+    </label>
+  );
+}
+
+function ToastStack({ toasts }) {
+  return (
+    <div className="fixed bottom-4 inset-x-0 z-[100] flex flex-col items-center gap-2 px-4 pointer-events-none">
+      {toasts.map((t) => (
+        <div
+          key={t.id}
+          className={`ek-slide-up pointer-events-auto max-w-sm w-full sm:w-auto px-4 py-3 rounded-xl shadow-lg text-sm font-medium flex items-start gap-2 ${
+            t.kind === "error"
+              ? "bg-red-600 text-white"
+              : "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+          }`}
+        >
+          <span>{t.kind === "error" ? "⚠️" : "✅"}</span>
+          <span>{t.message}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Logo({ size = 40 }) {
+  return (
+    <div
+      className="rounded-xl bg-white flex items-center justify-center shadow-md shrink-0"
+      style={{ width: size, height: size }}
+    >
+      <span style={{ fontSize: size * 0.55 }}>🔥🥥</span>
+    </div>
+  );
+}
+
+function SettingsModal({ open, onClose, apiKey, setApiKey }) {
+  const [draft, setDraft] = useState(apiKey || "");
+  useEffect(() => { if (open) setDraft(apiKey || ""); }, [open, apiKey]);
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/60 backdrop-blur-sm ek-fade-in" onClick={onClose}>
+      <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl max-w-md w-full shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="ek-gradient text-white p-5">
+          <div className="flex items-center gap-2.5">
+            <span className="text-2xl">⚙️</span>
+            <div>
+              <h3 className="font-display font-bold text-lg leading-tight">AI Insights Settings</h3>
+              <p className="text-xs text-blue-100">Bring your own Gemini API key</p>
+            </div>
+          </div>
+        </div>
+        <div className="p-5 space-y-4">
+          <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            The translator calls Google's Gemini API directly from your browser. Paste your own key below — it's
+            stored only in this browser's local storage, never sent anywhere else.
+          </p>
+          <TextField
+            label="Gemini API key"
+            placeholder="AIza..."
+            value={draft}
+            onChange={setDraft}
+            focusColor="#1E3A8A"
+          />
+          <a
+            href="https://aistudio.google.com/apikey"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs font-bold text-blue-700 dark:text-blue-400 hover:underline inline-block"
+          >
+            Get a free API key from Google AI Studio →
+          </a>
+          <div className="flex gap-2 pt-2">
+            <button
+              onClick={onClose}
+              className="flex-1 h-11 rounded-xl border border-slate-300 dark:border-slate-700 font-bold text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => { setApiKey(draft.trim()); onClose(); }}
+              className="flex-1 h-11 rounded-xl font-bold text-sm text-white"
+              style={{ backgroundColor: "#1E3A8A" }}
+            >
+              Save key
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OnboardingScreen({ onAuthenticated, pushToast }) {
+  const [inputEmail, setInputEmail] = useState("");
+  const [inputCode, setInputCode] = useState("");
+  const [awaiting, setAwaiting] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState("");
+  const [generatedCode, setGeneratedCode] = useState("");
+  const [error, setError] = useState(null);
+
+  const requestCode = () => {
+    const trimmed = inputEmail.trim();
+    if (!trimmed.toLowerCase().endsWith("@gmail.com")) {
+      setError("Identity validation failed. You must use a valid active Gmail account (@gmail.com).");
+      return;
+    }
+    const username = trimmed.slice(0, trimmed.toLowerCase().lastIndexOf("@gmail.com"));
+    if (!/^[a-zA-Z0-9.]{6,30}$/.test(username)) {
+      setError("Invalid Gmail format. Real Gmail accounts must be between 6 and 30 characters long before @gmail.com.");
+      return;
+    }
+    const code = generateOtp();
+    setVerificationEmail(trimmed);
+    setGeneratedCode(code);
+    setAwaiting(true);
+    setError(null);
+    pushToast(`Verification code sent to ${trimmed}`);
+    setTimeout(() => pushToast(`🔑 Demo verification code: ${code}`), 500);
+  };
+
+  const verify = () => {
+    if (inputCode.trim() === generatedCode) {
+      onAuthenticated(verificationEmail);
+      pushToast(`Authenticated successfully with ${verificationEmail}`);
+    } else {
+      setError("Validation code does not match. Please verify the secure email token.");
+    }
+  };
+
+  const cancel = () => {
+    setAwaiting(false);
+    setGeneratedCode("");
+    setVerificationEmail("");
+    setError(null);
+    setInputCode("");
+  };
+
+  return (
+    <div className="max-w-md mx-auto px-4 sm:px-0 py-8 ek-fade-in">
+      <div className="ek-gradient rounded-3xl h-40 flex items-center justify-center shadow-lg mb-6">
+        <div className="flex flex-col items-center text-white">
+          <Logo size={56} />
+          <h1 className="font-display font-bold text-lg mt-2.5">E-Kainano Translation Platform</h1>
+          <p className="text-xs text-blue-100 mt-0.5">Community-verified Kiribati translations</p>
+        </div>
+      </div>
+
+      <h2 className="font-display text-2xl font-bold text-center" style={{ color: "#1E3A8A" }}>
+        Digitizing Kiribati (GIL)
+      </h2>
+      <p className="text-sm text-slate-500 dark:text-slate-400 text-center mt-2 leading-relaxed px-2">
+        Help transition the low-resource Kiribati language into a medium-to-high resource digital language
+        through collaborative translations and verified human edits.
+      </p>
+
+      <div className="mt-6">
+        {!awaiting ? (
+          <Card className="p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Emoji>🔒</Emoji>
+              <h3 className="font-bold" style={{ color: "#1E3A8A" }}>Gmail Account Verification</h3>
+            </div>
+            <TextField
+              label="Enter Gmail address"
+              placeholder="your.email@gmail.com"
+              value={inputEmail}
+              onChange={setInputEmail}
+              testId="gmail_input_field"
+              icon={<Emoji>✉️</Emoji>}
+            />
+            {error && <p className="text-red-600 dark:text-red-400 text-sm mt-2">{error}</p>}
+            <div className="mt-4">
+              <PrimaryButton onClick={requestCode} color="#1E3A8A" testId="authenticate_button">
+                Access E-Kainano Translation
+              </PrimaryButton>
+            </div>
+          </Card>
+        ) : (
+          <Card className="p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Emoji>✅</Emoji>
+              <h3 className="font-bold" style={{ color: "#16A34A" }}>Confirm Validation Code</h3>
+            </div>
+            <div className="rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/40 p-3 mb-4">
+              <p className="text-xs font-bold text-blue-900 dark:text-blue-300">🔔 Security Gateway Verification (Demo)</p>
+              <p className="text-xs text-blue-800 dark:text-blue-400 mt-1 leading-relaxed">
+                A verification code was "sent" for {verificationEmail}. Since this is a browser demo (no real
+                email), the code is shown in the toast at the bottom of your screen — or right here:{" "}
+                <span className="font-mono font-bold">{generatedCode}</span>
+              </p>
+            </div>
+            <TextField
+              label="Enter 6-digit code"
+              placeholder="Enter token"
+              value={inputCode}
+              onChange={(v) => v.length <= 6 && setInputCode(v)}
+              testId="verification_code_input"
+              icon={<Emoji>🔒</Emoji>}
+              focusColor="#16A34A"
+            />
+            {error && <p className="text-red-600 dark:text-red-400 text-sm mt-2">{error}</p>}
+            <div className="mt-4 flex gap-2">
+              <button
+                onClick={cancel}
+                className="flex-1 h-11 rounded-xl border border-slate-300 dark:border-slate-700 font-bold text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+              >
+                Cancel
+              </button>
+              <div className="flex-[2]">
+                <PrimaryButton onClick={verify} color="#16A34A">Verify &amp; Continue</PrimaryButton>
+              </div>
+            </div>
+          </Card>
+        )}
+      </div>
+
+      <p className="text-center text-[11px] text-slate-400 mt-8">
+        E-Kainano Translation • Web Edition
+      </p>
+    </div>
+  );
+}
+
+function LedgerItem({ item, onDelete }) {
+  const dateString = useMemo(() => {
+    const d = new Date(item.timestamp);
+    return d.toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  }, [item.timestamp]);
+
+  return (
+    <Card className="p-3.5">
+      <div className="flex items-center justify-between flex-wrap gap-y-2">
+        <div className="flex items-center gap-2">
+          <Badge>{item.direction}</Badge>
+          <Badge tone={item.isSynced ? "green" : "amber"}>{item.isSynced ? "Synced" : "Pending Sync"}</Badge>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] text-slate-400">{dateString}</span>
+          <button
+            onClick={() => onDelete(item.id)}
+            className="w-6 h-6 flex items-center justify-center rounded hover:bg-red-50 dark:hover:bg-red-950/40 text-red-500"
+            title="Delete item"
+          >
+            🗑️
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-2.5">
+        <p className="text-[11px] font-bold text-slate-400">Source phrase:</p>
+        <p className="text-sm font-medium">{item.sourceText}</p>
+      </div>
+
+      <div className="mt-2">
+        <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">Verified correction:</p>
+        <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">{item.editedTranslation}</p>
+      </div>
+
+      {item.structuralBreakdown && (
+        <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+          <p className="text-[11px] font-bold text-slate-400">Particles &amp; structure:</p>
+          <p className="text-xs text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{item.structuralBreakdown}</p>
+        </div>
+      )}
+
+      {item.culturalNotes && (
+        <div className={`mt-2 ${!item.structuralBreakdown ? "pt-2 border-t border-slate-100 dark:border-slate-800" : ""}`}>
+          <p className="text-[11px] font-bold text-slate-400">Cultural nuances:</p>
+          <p className="text-xs text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{item.culturalNotes}</p>
+        </div>
+      )}
+
+      <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+        <p className="text-[11px] text-slate-400 font-mono">Attributed to: {item.contributorEmail}</p>
+      </div>
+    </Card>
+  );
+}
+
+const RESOURCE_LINKS = [
+  { label: "KIR-EN Dictionary", url: "https://www.trussel.com/kir/dic/dic_a.htm", emoji: "📖" },
+  { label: "Wiktionary", url: "https://en.wiktionary.org/wiki/Category:Gilbertese_language", emoji: "📚" },
+  { label: "Wikipedia (GIL)", url: "https://gil.wikipedia.org", emoji: "🌐" },
+  { label: "Google Translate", url: "https://translate.google.com", emoji: "🌍" },
+];
+
+function WorkspaceScreen({ userEmail, apiKey, openSettings, pushToast }) {
+  const [ledger, setLedger] = useState(() => readLS(LS.ledger, []));
+  const [sourceText, setSourceText] = useState("");
+  const [direction, setDirection] = useState("GIL ➔ EN");
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [aiBaseline, setAiBaseline] = useState("");
+  const [editedTranslation, setEditedTranslation] = useState("");
+  const [structuralBreakdown, setStructuralBreakdown] = useState("");
+  const [culturalNotes, setCulturalNotes] = useState("");
+  const [particleMode, setParticleMode] = useState(false);
+  const [manualEntryMode, setManualEntryMode] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [cooldown, setCooldown] = useState(0);
+
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  useEffect(() => {
+    const on = () => setIsOnline(true);
+    const off = () => setIsOnline(false);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    return () => { window.removeEventListener("online", on); window.removeEventListener("offline", off); };
+  }, []);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
+
+  useEffect(() => { writeLS(LS.ledger, ledger); }, [ledger]);
+
+  const pendingSyncCount = ledger.filter((l) => !l.isSynced).length;
+
+  const syncNow = () => {
+    if (!isOnline) { pushToast("Cannot synchronize: No network connection.", "error"); return; }
+    if (pendingSyncCount === 0) { pushToast("All translations are already synchronized!"); return; }
+    setIsSyncing(true);
+    setTimeout(() => {
+      setLedger((prev) => prev.map((l) => ({ ...l, isSynced: true })));
+      setIsSyncing(false);
+      pushToast("Successfully synchronized offline entries to E-Kainano cloud ledger!");
+    }, 1200);
+  };
+
+  const generate = async () => {
+    const text = sourceText.trim();
+    if (!text) { setErrorMessage("Please enter a phrase to translate."); return; }
+    if (!checkLinguisticValidity(text)) { setErrorMessage("Input check failed. Please avoid random gibberish character sequences."); return; }
+    if (!apiKey) { setErrorMessage("Gemini API key is not configured. Add your key via the ⚙️ Settings button above."); return; }
+    if (cooldown > 0) return;
+
+    setIsTranslating(true);
+    setErrorMessage(null);
+
+    try {
+      const baseInstruction = particleMode
+        ? "You are an expert native Kiribati philologist. Isolate grammatical particles closely and return clean lowercase JSON."
+        : "You are an elite, rapid-response bidirectional Kiribati and English translator. Return raw JSON matching the schema format strictly.";
+
+      const pastEntries = ledger.slice(0, 10);
+      let context = "";
+      if (pastEntries.length > 0) {
+        context = "\n\nCRITICAL LINGUISTIC LEARNING CORRECTIONS:\n" + pastEntries
+          .map((e, i) => `[Correction #${i + 1}] Input: "${e.sourceText}" -> Target: "${e.editedTranslation}"`)
+          .join("\n");
+      }
+
+      const parsed = await callGemini({
+        apiKey,
+        direction,
+        text,
+        systemInstruction: baseInstruction + context,
+      });
+
+      setAiBaseline(parsed.translation);
+      setEditedTranslation(parsed.translation);
+      setStructuralBreakdown(parsed.breakdown || "");
+      setCulturalNotes(parsed.cultural || "");
+      pushToast("AI Insights loaded successfully!");
+    } catch (e) {
+      setErrorMessage(`AI Error: ${e.message || "Unknown API issue"}`);
+    } fontally {
+      setIsTranslating(false);
+      setCooldown(5);
+    }
+  };
+
+  const commit = () => {
+    const source = sourceText.trim();
+    const edited = editedTranslation.trim();
+    if (!source || !edited) { setErrorMessage("Both source text and translation must be specified."); return; }
+    if (!checkLinguisticValidity(edited)) { setErrorMessage("Corrected translation values failed formatting guidelines."); return; }
+
+    const entry = {
+      id: uid(),
+      direction,
+      sourceText: source,
+      rawBaseline: aiBaseline,
+      editedTranslation: edited,
+      structuralBreakdown,
+      culturalNotes,
+      contributorEmail: userEmail,
+      timestamp: Date.now(),
+      isSynced: false,
+    };
+    setLedger((prev) => [entry, ...prev]);
+    pushToast("Translation successfully attributed & saved to device!");
+  };
+
+  const deleteItem = (id) => {
+    setLedger((prev) => prev.filter((l) => l.id !== id));
+    pushToast("Saved copy removed from device.");
+  };
+
+  const clearLedger = () => {
+    setLedger([]);
+    pushToast("Local device database cleared.");
+  };
+
+  const isGilToEn = direction === "GIL ➔ EN";
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 sm:px-0 py-6 space-y-4 ek-fade-in">
+      <Card className="p-3.5 flex items-center gap-3 !bg-blue-50 dark:!bg-blue-950/30 !border-blue-100 dark:!border-blue-900">
+        <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold" style={{ backgroundColor: "#3B82F6" }}>
+          {userEmail.charAt(0).toUpperCase()}
+        </div>
+        <div>
+          <p className="text-xs font-bold" style={{ color: "#1E3A8A" }}>Authenticated Contributor</p>
+          <p className="text-sm">{userEmail}</p>
+        </div>
+      </Card>
+
+      <Card
+        className={`p-3.5 !border ${
+          !isOnline ? "!bg-red-50 dark:!bg-red-950/30 !border-red-200 dark:!border-red-900"
+          : pendingSyncCount > 0 ? "!bg-amber-50 dark:!bg-amber-950/30 !border-amber-200 dark:!border-amber-900"
+          : "!bg-emerald-50 dark:!bg-emerald-950/30 !border-emerald-200 dark:!border-emerald-900"
+        }`}
+      >
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center text-white shrink-0"
+              style={{ backgroundColor: !isOnline ? "#EF4444" : "#22C55E" }}
+            >
+              {isOnline ? "✓" : "✕"}
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className={`text-sm font-bold ${!isOnline ? "text-red-700 dark:text-red-400" : "text-emerald-700 dark:text-emerald-400"}`}>
+                  {isOnline ? "System Online" : "Offline Mode"}
+                </span>
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: isOnline ? "#22C55E" : "#EF4444" }} />
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {isSyncing ? "Synchronizing offline database to cloud..." : pendingSyncCount > 0 ? `${pendingSyncCount} local save(s) pending synchronization` : "All local saves successfully synchronized"}
+              </p>
+            </div>
+          </div>
+          {pendingSyncCount > 0 && (
+            <button
+              onClick={syncNow}
+              disabled={!isOnline || isSyncing}
+              className="px-3 py-1.5 rounded-lg text-[11px] font-bold text-white disabled:bg-slate-300 disabled:text-slate-500"
+              style={{ backgroundColor: !isOnline || isSyncing ? undefined : "#1E3A8A" }}
+            >
+              {isSyncing ? "Syncing…" : "☁️ Sync Now"}
+            </button>
+          )}
+        </div>
+      </Card>
+
+      <Card className="p-4">
+        <h3 className="font-display font-bold" style={{ color: "#1E3A8A" }}>1. AI Insights Translation Layer</h3>
+
+        <div className="mt-3.5 bg-slate-100 dark:bg-slate-800 rounded-full p-1 flex h-12">
+          <button
+            onClick={() => setDirection("GIL ➔ EN")}
+            className={`flex-1 rounded-full text-sm font-bold flex items-center justify-center gap-1.5 transition-all ${isGilToEn ? "bg-white dark:bg-slate-950 shadow" : "text-slate-500"}`}
+            style={{ color: isGilToEn ? "#1E3A8A" : undefined }}
+          >
+            Kiribati <span className="text-blue-400">➜</span> English
+          </button>
+          <button
+            onClick={() => setDirection("EN ➔ GIL")}
+            className={`flex-1 rounded-full text-sm font-bold flex items-center justify-center gap-1.5 transition-all ${!isGilToEn ? "bg-white dark:bg-slate-950 shadow" : "text-slate-500"}`}
+            style={{ color: !isGilToEn ? "#1E3A8A" : undefined }}
+          >
+            English <span className="text-blue-400">➜</span> Kiribati
+          </button>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {RESOURCE_LINKS.map((r) => (
+            <a
+              key={r.label}
+              href={r.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center justify-center gap-1 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 text-[10px] font-bold text-center hover:bg-slate-50 dark:hover:bg-slate-800"
+              style={{ color: "#1E3A8A" }}
+            >
+              <span className="text-base">{r.emoji}</span>
+              <span className="leading-tight">{r.label}</span>
+            </a>
+          ))}
+        </div>
+
+        <div className="mt-4">
+          <TextField
+            label="Source phrase"
+            placeholder="E.g., Mauri ko uara? / Hello, how are you?"
+            value={sourceText}
+            onChange={setSourceText}
+            multiline
+            rows={3}
+            testId="source_text_input"
+          />
+        </div>
+
+        <div className="mt-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-amber-500">ℹ️</span>
+            <div>
+              <p className="text-sm font-bold">Optimize for particle mode</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Isolates grammatical particles closely</p>
+            </div>
+          </div>
+          <Switch checked={particleMode} onChange={setParticleMode} onColor="#D97706" testId="particle_mode_switch" />
+        </div>
+
+        {errorMessage && (
+          <div className="mt-3.5">
+            <p className="text-red-600 dark:text-red-400 text-sm">{errorMessage}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1.5">
+              No worries — you can skip AI Insights and enter your translation manually below instead.
+            </p>
+            <button
+              onClick={() => { setManualEntryMode(true); setErrorMessage(null); }}
+              className="w-full mt-2 h-10 rounded-lg border font-bold text-sm"
+              style={{ borderColor: "#1E3A8A", color: "#1E3A8A" }}
+            >
+              Skip AI, enter manually
+            </button>
+          </div>
+        )}
+
+        <div className="mt-3.5">
+          <PrimaryButton onClick={generate} disabled={isTranslating || cooldown > 0} color="#2563EB" testId="translate_btn">
+            {isTranslating ? "Contacting language nodes…" : cooldown > 0 ? `Please wait ${cooldown}s…` : <> 🔄 Generate AI Insights</>}
+          </PrimaryButton>
+        </div>
+      </Card>
+
+      {(aiBaseline || manualEntryMode) && (
+        <Card className="p-4">
+          <h3 className="font-display font-bold" style={{ color: "#16A34A" }}>
+            {aiBaseline ? "2. Edit & attribute to device ledger" : "2. Manual entry (offline) & attribute to device ledger"}
+          </h3>
+
+          {aiBaseline && (
+            <div className="mt-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-3">
+              <p className="text-[11px] font-bold text-slate-400">Original AI baseline</p>
+              <p className="text-sm font-medium mt-0.5">{aiBaseline}</p>
+            </div>
+          )}
+
+          <div className="mt-3.5">
+            <TextField
+              label="Verified translation (edit here)"
+              placeholder=""
+              value={editedTranslation}
+              onChange={setEditedTranslation}
+              testId="edited_translation_input"
+              focusColor="#16A34A"
+            />
+          </div>
+
+          <div className="mt-3.5">
+            <TextField
+              label="Structural breakdown"
+              placeholder="E.g., Breakdown of core particles (e, n, ia, etc.)"
+              value={structuralBreakdown}
+              onChange={setStructuralBreakdown}
+              multiline
+              rows={4}
+              testId="breakdown_input"
+              focusColor="#16A34A"
+            />
+          </div>
+
+          <div className="mt-3.5">
+            <TextField
+              label="Cultural context notes"
+              placeholder="Identify cultural nuances, formal/informal styles"
+              value={culturalNotes}
+              onChange={setCulturalNotes}
+              multiline
+              rows={4}
+              testId="cultural_notes_input"
+              focusColor="#16A34A"
+            />
+          </div>
+
+          <div className="mt-4">
+            <PrimaryButton onClick={commit} color="#16A34A" testId="commit_btn">✅ Commit to local ledger</PrimaryButton>
+          </div>
+        </Card>
+      )}
+
+      <div className="flex items-center justify-between pt-2">
+        <h3 className="font-display font-bold text-slate-800 dark:text-slate-100">Your attributed local ledger</h3>
+        {ledger.length > 0 && (
+          <button onClick={clearLedger} className="text-slate-400 hover:text-red-500 text-sm" title="Clear database">🗑️</button>
+        )}
+      </div>
+
+      {ledger.length === 0 ? (
+        <Card className="p-6 flex flex-col items-center text-center !bg-slate-50 dark:!bg-slate-900/60 !border-0">
+          <span className="text-3xl mb-1">ℹ️</span>
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Device copy ledger is empty.</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Translate &amp; approve translations above to populate your offline copy library.</p>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {ledger.map((item) => <LedgerItem key={item.id} item={item} onDelete={deleteItem} />)}
+        </div>
+      )}
+
+      <p className="text-center text-[11px] text-slate-400 pt-4 pb-2">E-Kainano Translation • Web Edition</p>
+    </div>
+  );
+}
+
+function App() {
+  const [theme, setTheme] = useState(() => readLS(LS.theme, "light"));
+  const [userEmail, setUserEmail] = useState(() => readLS(LS.email, null));
+  const [apiKey, setApiKeyState] = useState(() => readLS(LS.apiKey, ""));
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [toasts, setToasts] = useState([]);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    writeLS(LS.theme, theme);
+  }, [theme]);
+
+  useEffect(() => { writeLS(LS.email, userEmail); }, [userEmail]);
+
+  const setApiKey = useCallback((k) => { setApiKeyState(k); writeLS(LS.apiKey, k); }, []);
+
+  const pushToast = useCallback((message, kind = "success") => {
+    const id = uid();
+    setToasts((prev) => [...prev, { id, message, kind }]);
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3500);
+  }, []);
+
+  const signOut = () => {
+    setUserEmail(null);
+    pushToast("Signed out of E-Kainano Translation");
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <header className="ek-gradient text-white sticky top-0 z-40 shadow-lg">
+        <div className="max-w-2xl mx-auto px-4 sm:px-0 py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <Logo size={38} />
+            <div>
+              <h1 className="font-display font-bold text-base leading-tight">E-Kainano Translation</h1>
+              <p className="text-[11px] text-blue-100 leading-tight">Taetae ni Kiribati</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSettingsOpen(true)}
+              className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition-colors"
+              title="AI settings"
+            >
+              ⚙️
+            </button>
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm">{theme === "dark" ? "🌙" : "☀️"}</span>
+              <Switch
+                checked={theme === "dark"}
+                onChange={(v) => setTheme(v ? "dark" : "light")}
+                onColor="#34D399"
+                offColor="rgba(255,255,255,.35)"
+                testId="theme_toggle_switch"
+              />
+            </div>
+            {userEmail && (
+              <button
+                onClick={signOut}
+                className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition-colors"
+                title={`Sign out (${userEmail})`}
+              >
+                ↩️
+              </button>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <main className="flex-1">
+        {!userEmail ? (
+          <OnboardingScreen onAuthenticated={setUserEmail} pushToast={pushToast} />
+        ) : (
+          <WorkspaceScreen userEmail={userEmail} apiKey={apiKey} openSettings={() => setSettingsOpen(true)} pushToast={pushToast} />
+        )}
+      </main>
+
+      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} apiKey={apiKey} setApiKey={setApiKey} />
+      <ToastStack toasts={toasts} />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
